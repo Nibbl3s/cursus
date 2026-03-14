@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@auth/core": "^0.41.1",
     "@auth/prisma-adapter": "^2.11.1",
+    "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@supabase/supabase-js": "^2.99.1",
     "@uiw/react-md-editor": "^4.0.11",
@@ -19,6 +20,7 @@
     "date-fns": "^4.1.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
+    "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.18.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
