@@ -1,0 +1,362 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum KBSourceType {
+  MANUAL
+  AI_ASSISTED
+  IMPORT
+}
+
+enum AIJobType {
+  ASSIGNMENT_GENERATION
+  KNOWLEDGE_BASE_GENERATION
+}
+
+enum AIJobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETE
+  FAILED
+}
+
+enum AssessmentMode {
+  SELF_ASSESSED
+  PEER_REVIEW
+  SOCRATIC
+  TEACHER_GRADED
+  HYBRID
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  BOSS
+}
+
+enum TaskType {
+  STUDY
+  RESEARCH
+  WRITING
+  REVIEW
+  QUIZ
+  PRACTICE
+  REFLECTION
+  PEER_REVIEW
+  SOCRATIC
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  AI_GRADED
+  TEACHER_REVIEWED
+  RELEASED
+}
+
+enum MasteryLevel {
+  BEGINNING
+  DEVELOPING
+  PROFICIENT
+  ADVANCED
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model User {
+  id               String             @id @default(uuid())
+  email            String             @unique
+  role             Role               @default(STUDENT)
+  createdAt        DateTime           @default(now())
+  profile          Profile?
+  enrollments      Enrollment[]
+  aiJobs           AIGenerationJob[]
+  courses          Course[]
+  habits           Habit[]
+  peerReviewsGiven PeerReview[]
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  displayName   String
+  themeId       String    @default("medieval")
+  totalPoints   Int       @default(0)
+  level         Int       @default(1)
+  currentStreak Int       @default(0)
+  bestStreak    Int       @default(0)
+  lastActiveAt  DateTime?
+  avatarUrl     String?
+}
+
+model Course {
+  id             String          @id @default(uuid())
+  teacherId      String
+  teacher        User            @relation(fields: [teacherId], references: [id])
+  name           String
+  code           String
+  description    String?
+  color          String          @default("#6366f1")
+  createdAt      DateTime        @default(now())
+  assignments    Assignment[]
+  enrollments    Enrollment[]
+  tasks          Task[]
+  knowledgeBases KnowledgeBase[]
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  user       User     @relation(fields: [userId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id])
+  enrolledAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model KnowledgeBase {
+  id         String       @id @default(uuid())
+  courseId   String
+  course     Course       @relation(fields: [courseId], references: [id])
+  title      String
+  content    String
+  sourceType KBSourceType @default(MANUAL)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model AIGenerationJob {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  jobType      AIJobType
+  status       AIJobStatus @default(PENDING)
+  inputData    Json
+  outputData   Json?
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Assignment {
+  id               String            @id @default(uuid())
+  courseId         String
+  course           Course            @relation(fields: [courseId], references: [id])
+  title            String
+  description      String?
+  brief            String?
+  dueDate          DateTime
+  weight           Float             @default(0)
+  difficulty       Difficulty        @default(MEDIUM)
+  pointValue       Int               @default(100)
+  assessmentMode   AssessmentMode    @default(SELF_ASSESSED)
+  createdAt        DateTime          @default(now())
+  tasks            Task[]
+  submissions      Submission[]
+  rubric           Rubric?
+  peerReviewConfig PeerReviewConfig?
+  anchorSubmission AnchorSubmission?
+}
+
+model Rubric {
+  id           String           @id @default(uuid())
+  assignmentId String           @unique
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id])
+  criteria     RubricCriterion[]
+}
+
+model RubricCriterion {
+  id          String @id @default(uuid())
+  rubricId    String
+  rubric      Rubric @relation(fields: [rubricId], references: [id])
+  label       String
+  description String
+  maxScore    Int    @default(10)
+  order       Int    @default(0)
+}
+
+model AnchorSubmission {
+  id              String     @id @default(uuid())
+  assignmentId    String     @unique
+  assignment      Assignment @relation(fields: [assignmentId], references: [id])
+  content         String
+  teacherScores   Json
+  teacherFeedback String?
+}
+
+model PeerReviewConfig {
+  id                   String     @id @default(uuid())
+  assignmentId         String     @unique
+  assignment           Assignment @relation(fields: [assignmentId], references: [id])
+  boardEnabled         Boolean    @default(true)
+  anonymized           Boolean    @default(true)
+  calibrationRequired  Boolean    @default(true)
+  minReviewsToReceive  Int        @default(2)
+}
+
+model Task {
+  id            String          @id @default(uuid())
+  assignmentId  String
+  assignment    Assignment      @relation(fields: [assignmentId], references: [id])
+  courseId      String
+  course        Course          @relation(fields: [courseId], references: [id])
+  title         String
+  taskType      TaskType        @default(STUDY)
+  estimatedMins Int             @default(30)
+  pointValue    Int             @default(20)
+  order         Int             @default(0)
+  unlocksAfter  String?
+  completions   TaskCompletion[]
+}
+
+model TaskCompletion {
+  id            String   @id @default(uuid())
+  taskId        String
+  userId        String
+  task          Task     @relation(fields: [taskId], references: [id])
+  completedAt   DateTime @default(now())
+  pointsAwarded Int
+
+  @@unique([taskId, userId])
+}
+
+model Submission {
+  id                  String           @id @default(uuid())
+  assignmentId        String
+  userId              String
+  assignment          Assignment       @relation(fields: [assignmentId], references: [id])
+  status              SubmissionStatus @default(IN_PROGRESS)
+  progressPct         Float            @default(0)
+  content             String?
+  submittedAt         DateTime?
+  finalScore          Float?
+  masteryLevel        MasteryLevel?
+  teacherOverride     Boolean          @default(false)
+  releasedAt          DateTime?
+  selfAssessment      SelfAssessment?
+  socraticdialogue    SocraticDialogue?
+  peerReviewsReceived PeerReview[]     @relation("reviewee")
+  aiFeedback          AIFeedback?
+  postedToBoard       Boolean          @default(false)
+  postedAt            DateTime?
+  boardPinned         Boolean          @default(false)
+  boardHidden         Boolean          @default(false)
+}
+
+model SelfAssessment {
+  id                  String           @id @default(uuid())
+  submissionId        String           @unique
+  submission          Submission       @relation(fields: [submissionId], references: [id])
+  reflectionResponses Json
+  selfScore           Float
+  confidenceLevel     Int
+  completedAt         DateTime         @default(now())
+  calibrationScore    Float?
+  socraticdialogue    SocraticDialogue?
+}
+
+model SocraticDialogue {
+  id               String          @id @default(uuid())
+  submissionId     String?         @unique
+  submission       Submission?     @relation(fields: [submissionId], references: [id])
+  selfAssessmentId String?         @unique
+  selfAssessment   SelfAssessment? @relation(fields: [selfAssessmentId], references: [id])
+  transcript       Json
+  understandingReport Json
+  completedAt      DateTime        @default(now())
+}
+
+model PeerReview {
+  id                  String     @id @default(uuid())
+  submissionId        String
+  reviewerUserId      String
+  submission          Submission @relation("reviewee", fields: [submissionId], references: [id])
+  reviewer            User       @relation(fields: [reviewerUserId], references: [id])
+  criterionScores     Json
+  qualitativeFeedback String
+  criterionComments   Json?
+  calibrationScore    Float?
+  isAnchorReview      Boolean    @default(false)
+  completedAt         DateTime   @default(now())
+}
+
+model ReviewerCalibration {
+  id               String   @id @default(uuid())
+  userId           String
+  assignmentId     String
+  calibrationScore Float
+  unlockedAt       DateTime @default(now())
+
+  @@unique([userId, assignmentId])
+}
+
+model AIFeedback {
+  id               String     @id @default(uuid())
+  submissionId     String     @unique
+  submission       Submission @relation(fields: [submissionId], references: [id])
+  criterionScores  Json
+  overallScore     Float
+  feedbackMarkdown String
+  quickWins        String[]
+  strengths        String[]
+  confidenceLevel  Float
+  generatedAt      DateTime   @default(now())
+}
+
+model Habit {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  title       String
+  frequency   HabitFrequency  @default(DAILY)
+  pointValue  Int             @default(10)
+  completions HabitCompletion[]
+}
+
+model HabitCompletion {
+  id            String   @id @default(uuid())
+  habitId       String
+  userId        String
+  habit         Habit    @relation(fields: [habitId], references: [id])
+  completedAt   DateTime @default(now())
+  pointsAwarded Int
+}
+
+model Achievement {
+  id             String   @id @default(uuid())
+  userId         String
+  achievementKey String
+  unlockedAt     DateTime @default(now())
+
+  @@unique([userId, achievementKey])
+}
