@@ -1,4 +1,5 @@
-import type { Role } from '@prisma/client'
+import { $Enums } from '@prisma/client'
+type Role = $Enums.Role
 
 declare module 'next-auth' {
   interface Session {
