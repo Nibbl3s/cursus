@@ -1,8 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { $Enums } from '@prisma/client'
-
-type Role = $Enums.Role
+type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
 const hierarchy: Record<Role, number> = {
   STUDENT: 0,

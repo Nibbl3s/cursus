@@ -2,8 +2,7 @@ import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import Resend from 'next-auth/providers/resend'
 import prisma from '@/lib/prisma'
-import { $Enums } from '@prisma/client'
-type Role = $Enums.Role
+type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
 const ROLE_REDIRECTS: Record<Role, string> = {
   ADMIN: '/admin/dashboard',

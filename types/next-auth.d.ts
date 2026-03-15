@@ -1,5 +1,4 @@
-import { $Enums } from '@prisma/client'
-type Role = $Enums.Role
+type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
 declare module 'next-auth' {
   interface Session {
