@@ -1,0 +1,225 @@
+'use client';
+
+import { useRef } from 'react';
+
+export interface TaskDraft {
+  title:              string;
+  taskType:           TaskType;
+  estimatedMins:      number;
+  pointValue:         number;
+  unlocksAfterIndex:  number | null; // index into this tasks array; null = always unlocked
+}
+
+type TaskType =
+  | 'STUDY' | 'RESEARCH' | 'WRITING' | 'REVIEW'
+  | 'QUIZ'  | 'PRACTICE' | 'REFLECTION' | 'PEER_REVIEW' | 'SOCRATIC';
+
+const TASK_TYPES: TaskType[] = [
+  'STUDY', 'RESEARCH', 'WRITING', 'REVIEW',
+  'QUIZ',  'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC',
+];
+
+const TYPE_LABELS: Record<TaskType, string> = {
+  STUDY:       'Study',
+  RESEARCH:    'Research',
+  WRITING:     'Writing',
+  REVIEW:      'Review',
+  QUIZ:        'Quiz',
+  PRACTICE:    'Practice',
+  REFLECTION:  'Reflection',
+  PEER_REVIEW: 'Peer review',
+  SOCRATIC:    'Socratic',
+};
+
+const EMPTY_TASK: TaskDraft = {
+  title:             '',
+  taskType:          'STUDY',
+  estimatedMins:     30,
+  pointValue:        20,
+  unlocksAfterIndex: null,
+};
+
+interface Props {
+  tasks:    TaskDraft[];
+  onChange: (tasks: TaskDraft[]) => void;
+}
+
+export function TaskBuilder({ tasks, onChange }: Props) {
+  const dragIndex = useRef<number | null>(null);
+
+  function add() {
+    onChange([...tasks, { ...EMPTY_TASK }]);
+  }
+
+  function remove(index: number) {
+    const next = tasks.filter((_, i) => i !== index);
+    // Fix any unlocksAfterIndex references that pointed at or past the removed item
+    onChange(next.map((t) => ({
+      ...t,
+      unlocksAfterIndex:
+        t.unlocksAfterIndex === null ? null
+        : t.unlocksAfterIndex === index ? null               // pointed at removed task
+        : t.unlocksAfterIndex > index  ? t.unlocksAfterIndex - 1
+        : t.unlocksAfterIndex,
+    })));
+  }
+
+  function update<K extends keyof TaskDraft>(index: number, field: K, value: TaskDraft[K]) {
+    onChange(tasks.map((t, i) => (i === index ? { ...t, [field]: value } : t)));
+  }
+
+  // ---- Drag-and-drop (HTML5 API, no library) ----
+  function onDragStart(index: number) {
+    dragIndex.current = index;
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault(); // required to allow drop
+  }
+
+  function onDrop(targetIndex: number) {
+    const from = dragIndex.current;
+    if (from === null || from === targetIndex) return;
+    dragIndex.current = null;
+
+    const next = [...tasks];
+    const [moved] = next.splice(from, 1);
+    next.splice(targetIndex, 0, moved);
+
+    // Remap unlocksAfterIndex references after reorder
+    onChange(next.map((t) => {
+      if (t.unlocksAfterIndex === null) return t;
+      // The reference is stored as the OLD index — find the task it pointed to
+      // and find its NEW index.
+      const oldRef = t.unlocksAfterIndex;
+      let newRef: number | null;
+      if (oldRef === from) {
+        newRef = targetIndex;
+      } else if (from < targetIndex) {
+        newRef = oldRef > from && oldRef <= targetIndex ? oldRef - 1 : oldRef;
+      } else {
+        newRef = oldRef >= targetIndex && oldRef < from ? oldRef + 1 : oldRef;
+      }
+      return { ...t, unlocksAfterIndex: newRef };
+    }));
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-900">Task chain</h3>
+        <button
+          type="button"
+          onClick={add}
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          + Add task
+        </button>
+      </div>
+
+      {tasks.length === 0 && (
+        <p className="text-xs text-gray-400 py-3 text-center border border-dashed border-gray-200 rounded-lg">
+          No tasks yet. Add one above.
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {tasks.map((task, i) => (
+          <div
+            key={i}
+            draggable
+            onDragStart={() => onDragStart(i)}
+            onDragOver={onDragOver}
+            onDrop={() => onDrop(i)}
+            className="flex gap-2 items-start bg-gray-50 border border-gray-200 rounded-lg p-3 cursor-grab active:cursor-grabbing"
+          >
+            {/* Drag handle */}
+            <span
+              className="shrink-0 text-gray-300 select-none pt-2 text-xs leading-none"
+              aria-hidden="true"
+            >
+              ⠿
+            </span>
+
+            {/* Fields */}
+            <div className="flex-1 grid grid-cols-1 gap-2">
+              {/* Row 1: title */}
+              <input
+                value={task.title}
+                onChange={(e) => update(i, 'title', e.target.value)}
+                placeholder="Task title (e.g. Read chapter 3)"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+
+              {/* Row 2: type / mins / points / unlocks */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Type</label>
+                  <select
+                    value={task.taskType}
+                    onChange={(e) => update(i, 'taskType', e.target.value as TaskType)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {TASK_TYPES.map((t) => (
+                      <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Est. mins</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={task.estimatedMins}
+                    onChange={(e) => update(i, 'estimatedMins', parseInt(e.target.value, 10) || 1)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">XP</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={task.pointValue}
+                    onChange={(e) => update(i, 'pointValue', parseInt(e.target.value, 10) || 1)}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-0.5">Unlocks after</label>
+                  <select
+                    value={task.unlocksAfterIndex ?? ''}
+                    onChange={(e) =>
+                      update(i, 'unlocksAfterIndex', e.target.value === '' ? null : parseInt(e.target.value, 10))
+                    }
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">None</option>
+                    {tasks.slice(0, i).map((prev, j) => (
+                      <option key={j} value={j}>
+                        {j + 1}. {prev.title || '(untitled)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Remove */}
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="shrink-0 text-gray-300 hover:text-red-500 transition-colors text-lg leading-none pt-1"
+              aria-label="Remove task"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
