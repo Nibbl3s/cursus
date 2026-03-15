@@ -14,7 +14,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const result = await signIn('resend', { email, redirect: false })
+    const result = await signIn('resend', { email, redirect: false, callbackUrl: '/verify' })
 
     if (result?.error) {
       setError('Something went wrong. Please try again.')
