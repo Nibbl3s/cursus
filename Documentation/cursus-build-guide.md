@@ -96,21 +96,13 @@ Do this manually, not via Claude Code.
 npx create-next-app@latest cursus \
   --typescript --tailwind --eslint --app --src-dir=false
 cd cursus
-git init && git remote add origin <your-github-repo>
+git init && git remote add origin https://github.com/Nibbl3s/cursus.git
 ```
 
 ### Step 0.2 — Install core dependencies
 
 ```bash
-npm install @prisma/client prisma \
-  @supabase/supabase-js \
-  next-auth @auth/prisma-adapter @auth/core \
-  resend \
-  @anthropic-ai/sdk \
-  react-markdown @uiw/react-md-editor \
-  zod \
-  date-fns \
-  clsx tailwind-merge
+npm install @prisma/client prisma @supabase/supabase-js next-auth @auth/prisma-adapter @auth/core resend @anthropic-ai/sdk react-markdown @uiw/react-md-editor zod date-fns clsx tailwind-merge
 ```
 
 > **Note on NextAuth v5:** if using NextAuth v5 (beta), the package name is
@@ -128,8 +120,8 @@ Create these empty folders now so generated files land in the right places:
 
 ```bash
 mkdir -p "app/(auth)" "app/(teacher)" "app/(student)" "app/(admin)" app/api
-mkdir -p lib/themes lib/auth lib/ai
-mkdir -p components/student/board components/teacher components/admin components/shared
+mkdir -p "lib/themes" "lib/auth" "lib/ai"
+mkdir -p "components/student/board" "components/teacher" "components/admin" "components/shared"
 mkdir -p prisma
 ```
 
@@ -259,6 +251,8 @@ on the correct dashboard for your role. Check that `requireRole('ADMIN')` in a
 test server component redirects correctly for a STUDENT session.
 
 ---
+
+We are currently here!
 
 ## Phase 3 — Theme System
 *Goal: ThemeProvider works, CSS variables inject correctly, useTheme hook returns
