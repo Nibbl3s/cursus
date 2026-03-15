@@ -2,13 +2,8 @@ import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import Resend from 'next-auth/providers/resend'
 import prisma from '@/lib/prisma'
-type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
-const ROLE_REDIRECTS: Record<Role, string> = {
-  ADMIN: '/admin/dashboard',
-  TEACHER: '/teacher/dashboard',
-  STUDENT: '/student/dashboard',
-}
+type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -18,23 +13,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       from: process.env.EMAIL_FROM!,
     }),
   ],
+  pages: {
+    verifyRequest: '/verify',
+  },
   callbacks: {
     async session({ session, user }) {
       session.user.role = (user as { role: Role }).role
       return session
-    },
-    async redirect({ url, baseUrl }) {
-      // After magic-link verification, redirect based on the user's role.
-      // We look up the role directly from the DB using the active session.
-      try {
-        const session = await auth()
-        const role = (session?.user as { role?: Role } | null)?.role
-        if (role && role in ROLE_REDIRECTS) {
-          return `${baseUrl}${ROLE_REDIRECTS[role]}`
-        }
-      } catch (_) {}
-      if (url.startsWith(baseUrl)) return url
-      return `${baseUrl}/student/dashboard`
     },
   },
   events: {
