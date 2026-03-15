@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireRole } from '@/lib/auth/requireRole';
 import { prisma } from '@/lib/prisma';
 import { CourseCard } from '@/components/teacher/CourseCard';
@@ -33,9 +34,9 @@ export default async function TeacherDashboard() {
       {courses.length === 0 ? (
         <p className="text-sm text-gray-400">
           No courses yet.{' '}
-          <a href="/teacher/courses" className="text-indigo-600 hover:underline">
+          <Link href="/teacher/courses" className="text-indigo-600 hover:underline">
             Create your first course.
-          </a>
+          </Link>
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

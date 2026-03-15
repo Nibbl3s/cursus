@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full mx-auto px-6 py-12 bg-white rounded-2xl shadow-sm">
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">Sign in to Cursus</h1>
-        <p className="text-sm text-gray-500 mb-8">Enter your email and we'll send you a magic link.</p>
+        <p className="text-sm text-gray-500 mb-8">Enter your email and we&apos;ll send you a magic link.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

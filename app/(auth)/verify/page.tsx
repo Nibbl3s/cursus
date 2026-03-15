@@ -52,7 +52,7 @@ export default function VerifyPage() {
           </svg>
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Signing you in…</h2>
-        <p className="text-sm text-gray-500">You'll be redirected automatically.</p>
+        <p className="text-sm text-gray-500">You&apos;ll be redirected automatically.</p>
       </div>
     </div>
   )
