@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { PRESET_COLORS } from '@/components/teacher/ColorPicker';
+import { PRESET_COLORS } from '@/lib/course-colors';
 
 const patchSchema = z.object({
   name:        z.string().min(1).optional(),
