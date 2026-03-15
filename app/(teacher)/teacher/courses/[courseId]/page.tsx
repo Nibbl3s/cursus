@@ -63,6 +63,12 @@ export default async function CourseDetailPage({
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
+            href={`/teacher/courses/${courseId}/students`}
+            className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Students
+          </Link>
+          <Link
             href={`/teacher/courses/${courseId}/edit`}
             className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >

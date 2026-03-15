@@ -34,7 +34,7 @@ export function InviteStudentForm({ courseId }: Props) {
       return;
     }
 
-    setSuccess(`${email} has been enrolled and sent a sign-in link.`);
+    setSuccess(`${email} has been enrolled successfully.`);
     setEmail('');
     router.refresh();
   }

@@ -76,7 +76,7 @@ export default async function StudentsPage({
       <section>
         <h2 className="text-sm font-semibold text-gray-700 mb-1">Invite by email</h2>
         <p className="text-xs text-gray-400 mb-3">
-          The student receives a magic-link sign-in email. New accounts are created automatically.
+          The student must already have a Cursus account. They will be enrolled immediately.
         </p>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <InviteStudentForm courseId={courseId} />
