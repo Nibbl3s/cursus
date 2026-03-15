@@ -15,9 +15,9 @@ const assignmentSchema = z.object({
   title:          z.string().min(1, 'Title is required'),
   brief:          z.string().optional(),
   dueDate:        z.string().min(1, 'Due date is required'),
-  weight:         z.number({ invalid_type_error: 'Weight must be a number' }).min(0).max(100),
+  weight:         z.number().min(0).max(100),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']),
-  pointValue:     z.number({ invalid_type_error: 'Point value must be a number' }).int().positive(),
+  pointValue:     z.number().int().positive(),
   assessmentMode: z.enum(['SELF_ASSESSED', 'PEER_REVIEW', 'SOCRATIC', 'TEACHER_GRADED', 'HYBRID']),
 });
 
