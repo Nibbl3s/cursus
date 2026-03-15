@@ -6,13 +6,13 @@ import { prisma } from '@/lib/prisma';
 const taskDraftSchema = z.object({
   title:             z.string().min(1),
   taskType:          z.enum(['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC']),
-  estimatedMins:     z.number().int().positive(),
-  pointValue:        z.number().int().positive(),
-  unlocksAfterIndex: z.number().int().nullable(),
+  estimatedMins:     z.number().min(1),
+  pointValue:        z.number().min(1),
+  unlocksAfterIndex: z.number().nullable(),
 });
 
 const bodySchema = z.object({
-  assignmentId: z.string().uuid(),
+  assignmentId: z.string().min(1),
   tasks:        z.array(taskDraftSchema),
 });
 

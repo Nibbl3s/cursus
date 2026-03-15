@@ -4,13 +4,13 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 const createSchema = z.object({
-  courseId:       z.string().uuid(),
+  courseId:       z.string().min(1),
   title:          z.string().min(1),
   brief:          z.string().optional(),
   dueDate:        z.string().min(1),
   weight:         z.number().min(0).max(100),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']),
-  pointValue:     z.number().int().positive(),
+  pointValue:     z.number().min(1),
   assessmentMode: z.enum(['SELF_ASSESSED', 'PEER_REVIEW', 'SOCRATIC', 'TEACHER_GRADED', 'HYBRID']),
 });
 

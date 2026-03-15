@@ -4,11 +4,11 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 const rubricSchema = z.object({
-  assignmentId: z.string().uuid(),
+  assignmentId: z.string().min(1),
   criteria: z.array(z.object({
     label:       z.string().min(1),
     description: z.string().min(1),
-    maxScore:    z.number().int().positive(),
+    maxScore:    z.number().min(1),
   })).min(1),
 });
 

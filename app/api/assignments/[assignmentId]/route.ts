@@ -9,7 +9,7 @@ const patchSchema = z.object({
   dueDate:        z.string().optional(),
   weight:         z.number().min(0).max(100).optional(),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']).optional(),
-  pointValue:     z.number().int().positive().optional(),
+  pointValue:     z.number().min(1).optional(),
   assessmentMode: z.enum(['SELF_ASSESSED', 'PEER_REVIEW', 'SOCRATIC', 'TEACHER_GRADED', 'HYBRID']).optional(),
 });
 
