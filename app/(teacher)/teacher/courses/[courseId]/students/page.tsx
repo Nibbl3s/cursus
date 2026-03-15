@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { format } from 'date-fns';
 import { requireRole } from '@/lib/auth/requireRole';
 import { prisma } from '@/lib/prisma';
@@ -33,8 +34,10 @@ export default async function StudentsPage({
 
   if (!course || course.teacherId !== session.user.id) notFound();
 
-  const enrollmentLink =
-    `${process.env.NEXTAUTH_URL ?? 'http://localhost:3000'}/enroll?code=${courseId}`;
+  const headersList = await headers();
+  const host = headersList.get('host') ?? 'localhost:3000';
+  const protocol = host.startsWith('localhost') ? 'http' : 'https';
+  const enrollmentLink = `${protocol}://${host}/enroll?code=${courseId}`;
 
   return (
     <div className="p-8 space-y-8 max-w-3xl">

@@ -90,13 +90,13 @@ export function RubricBuilder({ criteria, onChange }: Props) {
                 value={c.label}
                 onChange={(e) => update(i, 'label', e.target.value)}
                 placeholder="Label (e.g. Critical Thinking)"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2.5 py-1.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 value={c.description}
                 onChange={(e) => update(i, 'description', e.target.value)}
                 placeholder="Description (e.g. Demonstrates clear reasoning…)"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2.5 py-1.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -108,7 +108,7 @@ export function RubricBuilder({ criteria, onChange }: Props) {
                 min={1}
                 value={c.maxScore}
                 onChange={(e) => update(i, 'maxScore', parseInt(e.target.value, 10) || 1)}
-                className="w-full px-2 py-1.5 text-sm text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm text-gray-900 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 

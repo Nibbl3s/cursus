@@ -148,7 +148,7 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                 value={task.title}
                 onChange={(e) => update(i, 'title', e.target.value)}
                 placeholder="Task title (e.g. Read chapter 3)"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2.5 py-1.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
 
               {/* Row 2: type / mins / points / unlocks */}
@@ -158,7 +158,7 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                   <select
                     value={task.taskType}
                     onChange={(e) => update(i, 'taskType', e.target.value as TaskType)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {TASK_TYPES.map((t) => (
                       <option key={t} value={t}>{TYPE_LABELS[t]}</option>
@@ -173,7 +173,7 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                     min={1}
                     value={task.estimatedMins}
                     onChange={(e) => update(i, 'estimatedMins', parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -184,7 +184,7 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                     min={1}
                     value={task.pointValue}
                     onChange={(e) => update(i, 'pointValue', parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -195,7 +195,7 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                     onChange={(e) =>
                       update(i, 'unlocksAfterIndex', e.target.value === '' ? null : parseInt(e.target.value, 10))
                     }
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">None</option>
                     {tasks.slice(0, i).map((prev, j) => (

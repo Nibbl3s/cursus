@@ -49,7 +49,7 @@ export function NewCourseForm({ onClose }: { onClose: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Introduction to Biology"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <div className="col-span-2 sm:col-span-1">
@@ -61,7 +61,7 @@ export function NewCourseForm({ onClose }: { onClose: () => void }) {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="BIO101"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
@@ -73,7 +73,7 @@ export function NewCourseForm({ onClose }: { onClose: () => void }) {
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
           placeholder="Optional course description"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 

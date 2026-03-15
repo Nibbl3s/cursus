@@ -155,7 +155,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Market Analysis Report"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         {fieldErrors.title && <p className="mt-1 text-xs text-red-600">{fieldErrors.title}</p>}
       </div>
@@ -179,7 +179,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
             type="datetime-local"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {fieldErrors.dueDate && <p className="mt-1 text-xs text-red-600">{fieldErrors.dueDate}</p>}
         </div>
@@ -194,7 +194,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
             step={0.1}
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {fieldErrors.weight && <p className="mt-1 text-xs text-red-600">{fieldErrors.weight}</p>}
         </div>
@@ -207,7 +207,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as typeof DIFFICULTIES[number])}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
           >
             {DIFFICULTIES.map((d) => (
               <option key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</option>
@@ -223,7 +223,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
             min={1}
             value={pointValue}
             onChange={(e) => setPointValue(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {fieldErrors.pointValue && <p className="mt-1 text-xs text-red-600">{fieldErrors.pointValue}</p>}
         </div>
@@ -235,7 +235,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
         <select
           value={assessmentMode}
           onChange={(e) => setAssessmentMode(e.target.value as typeof ASSESSMENT_MODES[number])}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
         >
           {ASSESSMENT_MODES.map((m) => (
             <option key={m} value={m}>{MODE_LABELS[m]}</option>
