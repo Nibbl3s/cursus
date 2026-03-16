@@ -38,7 +38,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Replace existing tasks
+  // Replace existing tasks — delete completions first (no cascade in schema)
+  await prisma.taskCompletion.deleteMany({ where: { task: { assignmentId } } });
   await prisma.task.deleteMany({ where: { assignmentId } });
 
   // Create tasks without unlocksAfter first to get real IDs
