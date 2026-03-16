@@ -68,6 +68,8 @@ All under `app/api/`. Routes follow REST conventions:
 - `/api/admin/users` — GET all users (ADMIN only)
 - `/api/admin/users/[userId]` — GET / PATCH role / DELETE (hard-delete; self-deletion blocked)
 - `/api/admin/settings` — GET / PATCH `PlatformSettings` singleton (includes AI provider config)
+- `/api/knowledge-bases` — POST create `KnowledgeBase` for a course
+- `/api/knowledge-bases/[kbId]` — GET / PATCH / DELETE a knowledge base article
 - `/api/ai/interview` — POST streaming endpoint; reads provider config from DB, calls `createInterviewStream()`, streams normalized SSE back. Returns 503 if no API key is configured.
 - `/api/ai/generate` — POST create / PATCH update `AIGenerationJob` records for interview persistence
 - `/api/auth/[...nextauth]` — NextAuth handler
@@ -108,6 +110,8 @@ The AI provider is **runtime-configurable by admins** via Platform Settings (sto
   data: {"t":"done"}
   data: {"t":"error","v":"..."}
   ```
+
+**Knowledge Base**: Teachers manage articles at `/teacher/courses/[courseId]/knowledge/` (list/create/edit/preview). Students browse them at `/student/library/` (all enrolled courses) and `/student/library/[kbId]` (article view with rich markdown). Creation uses the same AI interview flow as assignments — `buildExportPrompt('knowledgeBase')` and `parseKnowledgeBaseImport`.
 
 **AssignmentCreationHub** (`components/teacher/AssignmentCreationHub.tsx`) has three tabs that all converge on the same `AssignmentForm` review step:
 1. **Manual** — direct form

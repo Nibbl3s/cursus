@@ -6,6 +6,8 @@ import { AssignmentBrief } from '@/components/student/AssignmentBrief';
 import { TaskRow } from '@/components/student/TaskRow';
 import { PostToBoardButton } from '@/components/student/board/PostToBoardButton';
 import { CourseColorDot } from '@/components/shared/CourseColorDot';
+import { SubmitWorkPanel } from './_components/SubmitWorkPanel';
+import { FeedbackPanel } from './_components/FeedbackPanel';
 
 interface Props {
   params: Promise<{ assignmentId: string }>;
@@ -28,6 +30,12 @@ export default async function AssignmentDetailPage({ params }: Props) {
   // Ensure a Submission row exists before reading or referencing it
   const submission = await ensureSubmission(userId, assignmentId);
 
+  // Fetch AI feedback if the submission has been released
+  const aiFeedback =
+    submission.status === 'RELEASED'
+      ? await prisma.aIFeedback.findUnique({ where: { submissionId: submission.id } })
+      : null;
+
   // Fetch completed task IDs for unlock state calculation
   const completions = await prisma.taskCompletion.findMany({
     where: { userId, task: { assignmentId } },
@@ -41,8 +49,16 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const urgencyColor =
     daysLeft < 3 ? 'text-red-400' : daysLeft <= 7 ? 'text-amber-400' : 'text-white/50';
 
+  const allTasksDone =
+    assignment.tasks.length > 0 && assignment.tasks.every((t) => completedTaskIds.has(t.id));
   const isPeerReview = assignment.assessmentMode === 'PEER_REVIEW';
-  const hasSubmitted = submission.status === 'SUBMITTED';
+  const isReleased = submission.status === 'RELEASED';
+  const hasSubmitted =
+    submission.status === 'SUBMITTED' ||
+    submission.status === 'UNDER_REVIEW' ||
+    submission.status === 'AI_GRADED' ||
+    submission.status === 'TEACHER_REVIEWED' ||
+    isReleased;
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-3xl mx-auto">
@@ -127,6 +143,26 @@ export default async function AssignmentDetailPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      {/* Work submission — shown when all tasks are complete */}
+      {allTasksDone && (
+        <SubmitWorkPanel
+          assignmentId={assignmentId}
+          initialContent={submission.content ?? null}
+          alreadySubmitted={hasSubmitted}
+        />
+      )}
+
+      {/* Feedback panel — shown when submission is released */}
+      {isReleased && aiFeedback && (
+        <FeedbackPanel
+          masteryLevel={submission.masteryLevel as 'BEGINNING' | 'DEVELOPING' | 'PROFICIENT' | 'ADVANCED' | null}
+          quickWins={aiFeedback.quickWins}
+          strengths={aiFeedback.strengths}
+          feedbackMarkdown={aiFeedback.feedbackMarkdown}
+          finalScore={submission.finalScore}
+        />
+      )}
 
       {/* Post to Board — only for PEER_REVIEW assignments that have been submitted */}
       {isPeerReview && hasSubmitted && (
