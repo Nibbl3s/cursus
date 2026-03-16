@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth/requireRole';
 import { prisma } from '@/lib/prisma';
 import { KnowledgeBaseForm } from '@/components/teacher/KnowledgeBaseForm';
-import { DeleteKBButton } from './_components/DeleteKBButton';
+import { DeleteKBButton } from '../_components/DeleteKBButton';
 
 export default async function EditKnowledgeBasePage({
   params,

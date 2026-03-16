@@ -69,7 +69,12 @@ export default async function KnowledgeBasePage({
                   {SOURCE_LABELS[kb.sourceType] ?? kb.sourceType}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{kb.title}</p>
+                  <Link
+                    href={`/teacher/courses/${courseId}/knowledge/${kb.id}`}
+                    className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition-colors truncate block"
+                  >
+                    {kb.title}
+                  </Link>
                   <p className="text-xs text-gray-400 mt-0.5">
                     Updated {formatDistanceToNow(kb.updatedAt, { addSuffix: true })}
                   </p>
@@ -77,9 +82,9 @@ export default async function KnowledgeBasePage({
               </div>
               <Link
                 href={`/teacher/courses/${courseId}/knowledge/${kb.id}/edit`}
-                className="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                className="shrink-0 text-xs text-gray-400 hover:text-gray-700 transition-colors"
               >
-                Edit →
+                Edit
               </Link>
             </div>
           ))}
