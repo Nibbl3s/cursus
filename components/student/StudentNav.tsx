@@ -12,6 +12,7 @@ export function StudentNav() {
     { href: '/student/dashboard', label: theme.vocabulary.dashboardGreeting },
     { href: '/student/quests',    label: theme.vocabulary.questBoard },
     { href: '/student/bosses',    label: theme.vocabulary.deadlines },
+    { href: '/student/library',   label: 'Library' },
     { href: '/student/profile',   label: theme.vocabulary.profile },
     { href: '/student/settings',  label: 'Settings' },
   ];

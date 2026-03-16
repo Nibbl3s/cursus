@@ -80,7 +80,7 @@ export function KnowledgeBaseForm({ courseId, kbId, defaultValues, sourceType = 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit} className="space-y-6">
 
       {/* Title */}
       <div>
