@@ -66,7 +66,9 @@ All under `app/api/`. Routes follow REST conventions:
 - `/api/profile/theme` — PATCH updates `Profile.themeId` for the current student
 - `/api/admin/users` — GET all users (ADMIN only)
 - `/api/admin/users/[userId]` — GET / PATCH role / DELETE (hard-delete; self-deletion blocked)
-- `/api/admin/settings` — GET / PATCH `PlatformSettings` singleton
+- `/api/admin/settings` — GET / PATCH `PlatformSettings` singleton (includes AI provider config)
+- `/api/ai/interview` — POST streaming endpoint; reads provider config from DB, calls `createInterviewStream()`, streams normalized SSE back. Returns 503 if no API key is configured. `export const maxDuration = 60` for Vercel.
+- `/api/ai/generate` — POST create / PATCH update `AIGenerationJob` records for interview persistence
 - `/api/auth/[...nextauth]` — NextAuth handler
 
 Every API route checks `auth()` for session and role before acting. Input is validated with Zod `schema.safeParse()`; on failure return `{ error: parsed.error.flatten() }` at status 422. Use `notFound()` (not a 403) when a resource exists but the user doesn't own it — this hides resource existence.
@@ -92,7 +94,26 @@ Three server-side libs power the XP/level/achievement system:
 
 ### AI Integration
 
-Anthropic Claude is used for: assignment generation, knowledge base generation, peer review synthesis, grading/feedback, and Socratic dialogue. AI routes should handle errors gracefully — see the `AIGenerationJob` model for async job patterns.
+The AI provider is **runtime-configurable by admins** via Platform Settings (stored in `PlatformSettings` — not environment variables). `lib/platformSettings.ts` exposes `getSettings()` which includes `aiProvider`, `aiModel`, `aiApiKey`, and `aiBaseUrl`.
+
+**`lib/ai/` module:**
+- `assignmentSchema.ts` / `knowledgeBaseSchema.ts` — Zod schemas (`AssignmentImportSchema`, `KnowledgeBaseImportSchema`) and their exported TS types
+- `parseImport.ts` — `parseAssignmentImport(json)` / `parseKnowledgeBaseImport(json)`: safe JSON.parse → Zod validation, returns `{ success, data }` or `{ success, errors: ZodError }`
+- `prompts.ts` — `buildExportPrompt('assignment' | 'knowledgeBase')`: returns the teacher-facing interview prompt with inline JSON schema for pasting into any external LLM
+- `providers.ts` — `createInterviewStream(options)`: streaming factory that dispatches to Anthropic (via `@anthropic-ai/sdk`) or any OpenAI-compatible API (raw fetch). Returns a `ReadableStream<Uint8Array>` emitting a **normalized SSE format** so the client is provider-agnostic:
+  ```
+  data: {"t":"text","v":"..."}
+  data: {"t":"tool","n":"finalize_assignment","i":{...}}
+  data: {"t":"done"}
+  data: {"t":"error","v":"..."}
+  ```
+
+**AssignmentCreationHub** (`components/teacher/AssignmentCreationHub.tsx`) has three tabs that all converge on the same `AssignmentForm` review step:
+1. **Manual** — direct form
+2. **Import from AI** — `ExportPromptPanel` (copyable prompt) + `ImportPastePanel` (paste JSON, runs `parseAssignmentImport`, calls `onImport`)
+3. **AI Interview** — `AIInterviewChat` streams from `/api/ai/interview`, parses normalized SSE, calls `onComplete` when `finalize_assignment` tool fires
+
+`AIGenerationJob` records are written by `/api/ai/generate` (POST = create, PATCH = update messages/status) for conversation persistence across page reloads.
 
 ### Component Organization
 
@@ -156,7 +177,8 @@ DATABASE_URL          # Supabase pooler URL (runtime)
 DIRECT_URL            # Supabase direct URL (migrations only)
 AUTH_SECRET           # NextAuth session secret
 AUTH_URL              # Callback base URL (http://localhost:3000 in dev)
-ANTHROPIC_API_KEY     # Claude API
 RESEND_API_KEY        # Magic link emails
 EMAIL_FROM            # Sender address
 ```
+
+`ANTHROPIC_API_KEY` is **no longer required** as an environment variable — the AI provider, model, and API key are configured by an admin at runtime via Platform Settings and stored in the `PlatformSettings` DB row.
