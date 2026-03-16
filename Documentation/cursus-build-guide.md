@@ -252,8 +252,6 @@ test server component redirects correctly for a STUDENT session.
 
 ---
 
-We are currently here!
-
 ## Phase 3 — Theme System
 *Goal: ThemeProvider works, CSS variables inject correctly, useTheme hook returns
 vocabulary, three themes are complete.*
@@ -446,6 +444,8 @@ Before building the dashboard, we need to ensure Submission records exist.
 > to update it."
 
 ### Step 5.1 — getDailyTasks function
+
+Here at the moment
 
 **Context:** the entire **Multi-Course: getDailyTasks Logic** section.
 

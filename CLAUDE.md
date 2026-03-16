@@ -47,19 +47,34 @@ Key schema domains:
 - **Gamification**: `Habit`, `HabitCompletion`, `Achievement`, `Profile` (XP/level/streaks)
 - **AI Jobs**: `AIGenerationJob` (async queue for generation tasks)
 
+### Data Fetching
+
+Server components call Prisma directly — no API routes for page data loads. The pattern is: `await requireRole()` → `await prisma.query()` → render. Client components that need to mutate data call API routes with `fetch`, then call `router.refresh()` to re-render the parent server component.
+
 ### API Routes
 
 All under `app/api/`. Routes follow REST conventions:
 - `/api/courses` — list/create
 - `/api/courses/[courseId]` — get/update/delete
-- `/api/courses/[courseId]/enroll` — student enrollment
+- `/api/courses/[courseId]/enroll` — student enrollment (by email lookup)
 - `/api/assignments`, `/api/assignments/[assignmentId]` — CRUD
 - `/api/rubric`, `/api/tasks` — rubric and task management
+- `/api/tasks/[taskId]/complete` — mark task done, recalculates submission progress
 - `/api/auth/[...nextauth]` — NextAuth handler
+
+Every API route checks `auth()` for session and role before acting. Input is validated with Zod `schema.safeParse()`; on failure return `{ error: parsed.error.flatten() }` at status 422. Use `notFound()` (not a 403) when a resource exists but the user doesn't own it — this hides resource existence.
+
+**Next.js 15**: Both page `params` and API route `params` are Promises and must be awaited:
+```typescript
+export async function GET(_req: Request, { params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = await params;
+```
 
 ### Theme System
 
 The app has three cosmetic themes (Medieval RPG, Space, Cyber) defined in [lib/themes/](lib/themes/). Themes replace UI vocabulary (e.g., "course" → "realm", "assignment" → "quest") and apply color schemes. The `WorldTheme` interface drives all vocabulary substitution throughout components.
+
+`ThemeProvider` in [components/student/ThemeProvider.tsx](components/student/ThemeProvider.tsx) injects CSS variables at runtime (`--color-*`) from `theme.palette`. Use the `useTheme()` hook in student-facing client components to access `theme.vocabulary` for themed text labels.
 
 ### AI Integration
 
@@ -71,6 +86,12 @@ Anthropic Claude is used for: assignment generation, knowledge base generation, 
 - `components/student/` — student UI and theme provider
 - `components/admin/` — admin UI
 - `lib/course-colors.ts` — `PRESET_COLORS` constant used in course creation forms
+
+Client forms manage three state slices: `fieldErrors: Record<string, string>`, `serverError: string`, and `saving: boolean`. Complex teacher forms (AssignmentForm) chain multiple `fetch` calls — first the main resource, then rubric, then tasks — in sequence.
+
+ESM-only packages (e.g. `@uiw/react-md-editor`) must be loaded with `dynamic(() => import(...), { ssr: false })`.
+
+`TaskBuilder` uses the HTML5 Drag and Drop API directly (no library) to reorder tasks and remap `unlocksAfterIndex` dependencies. `lib/ensureSubmission.ts` provides a Prisma upsert helper that guarantees a `Submission` row exists before creating `TaskCompletion` records.
 
 ### Assessment Modes
 
