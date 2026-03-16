@@ -63,7 +63,6 @@ export default async function BossesPage() {
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Bosses</h1>
       <BossesView groups={groups} />
     </main>
   );

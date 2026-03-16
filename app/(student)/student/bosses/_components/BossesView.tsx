@@ -44,14 +44,19 @@ export function BossesView({ groups }: BossesViewProps) {
 
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-white/40 text-center py-16">
-        No upcoming {theme.vocabulary.deadlines.toLowerCase()} — you&apos;re clear.
-      </p>
+      <>
+        <h1 className="text-2xl font-bold text-white mb-6">{theme.vocabulary.deadlines}</h1>
+        <p className="text-sm text-white/40 text-center py-16">
+          No upcoming {theme.vocabulary.deadlines.toLowerCase()} — you&apos;re clear.
+        </p>
+      </>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
+      <h1 className="text-2xl font-bold text-white mb-6">{theme.vocabulary.deadlines}</h1>
+      <div className="flex flex-col gap-6">
       {groups.map(({ courseId, courseName, courseCode, courseColor, assignments }) => (
         <div key={courseId} className="rounded-xl overflow-hidden border border-white/10">
           {/* Course header — course color as background */}
@@ -131,5 +136,6 @@ export function BossesView({ groups }: BossesViewProps) {
         </div>
       ))}
     </div>
+    </>
   );
 }
