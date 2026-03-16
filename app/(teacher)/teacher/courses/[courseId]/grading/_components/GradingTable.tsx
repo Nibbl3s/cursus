@@ -148,7 +148,7 @@ export function GradingTable({
                   key={row.submissionId}
                   onClick={() =>
                     router.push(
-                      `/teacher/courses/${courseId}/submissions/${row.submissionId}`,
+                      `/teacher/courses/${courseId}/grading/${row.submissionId}`,
                     )
                   }
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
