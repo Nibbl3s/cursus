@@ -33,7 +33,7 @@ const FINALIZE_TOOL: Anthropic.Tool = {
                 taskType:          { type: 'string', enum: ['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC'] },
                 estimatedMins:     { type: 'integer', minimum: 1 },
                 pointValue:        { type: 'integer', minimum: 1 },
-                unlocksAfterIndex: { type: ['integer', 'null'], description: '0-based index of prerequisite task; null = always unlocked' },
+                unlocksAfterIndex: { anyOf: [{ type: 'integer' }, { type: 'null' }], description: '0-based index of prerequisite task; null = always unlocked' },
               },
               required: ['title', 'taskType', 'estimatedMins', 'pointValue', 'unlocksAfterIndex'],
             },
@@ -48,7 +48,7 @@ const FINALIZE_TOOL: Anthropic.Tool = {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session || session.user.role !== 'TEACHER') {
+  if (!session?.user?.id || session.user.role !== 'TEACHER') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
