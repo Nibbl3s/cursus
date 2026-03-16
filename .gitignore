@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# runtime platform settings (swapped for DB later)
+/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
