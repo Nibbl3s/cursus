@@ -1,15 +1,4 @@
-/**
- * Platform-wide settings store.
- *
- * Currently backed by a JSON file at /data/platform-settings.json so it can
- * be exercised locally without a DB migration. The file is gitignored and
- * created on first save. On Vercel the filesystem is ephemeral, so settings
- * reset on each cold start — swap getSettings/saveSettings for DB reads/writes
- * when a PlatformSettings table is added.
- */
-
-import fs from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
 
 export interface PlatformSettings {
   defaultThemeId: 'medieval' | 'space' | 'cyber';
@@ -25,18 +14,23 @@ export const SETTINGS_DEFAULTS: PlatformSettings = {
   selfAssessmentEnabled: true,
 };
 
-const SETTINGS_PATH = path.join(process.cwd(), 'data', 'platform-settings.json');
-
-export function getSettings(): PlatformSettings {
-  try {
-    const raw = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-    return { ...SETTINGS_DEFAULTS, ...JSON.parse(raw) };
-  } catch {
-    return { ...SETTINGS_DEFAULTS };
-  }
+export async function getSettings(): Promise<PlatformSettings> {
+  const row = await prisma.platformSettings.findUnique({
+    where: { id: 'singleton' },
+  });
+  if (!row) return { ...SETTINGS_DEFAULTS };
+  return {
+    defaultThemeId: row.defaultThemeId as PlatformSettings['defaultThemeId'],
+    aiMentorEnabled: row.aiMentorEnabled,
+    peerReviewEnabled: row.peerReviewEnabled,
+    selfAssessmentEnabled: row.selfAssessmentEnabled,
+  };
 }
 
-export function saveSettings(settings: PlatformSettings): void {
-  fs.mkdirSync(path.dirname(SETTINGS_PATH), { recursive: true });
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+export async function saveSettings(settings: PlatformSettings): Promise<void> {
+  await prisma.platformSettings.upsert({
+    where: { id: 'singleton' },
+    create: { id: 'singleton', ...settings },
+    update: settings,
+  });
 }

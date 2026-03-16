@@ -16,7 +16,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return NextResponse.json(getSettings());
+  return NextResponse.json(await getSettings());
 }
 
 export async function PATCH(req: Request) {
@@ -31,7 +31,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  saveSettings(parsed.data);
+  await saveSettings(parsed.data);
 
   return NextResponse.json(parsed.data);
 }

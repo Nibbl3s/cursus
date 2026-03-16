@@ -5,7 +5,7 @@ import { SettingsForm } from './_components/SettingsForm';
 export default async function AdminSettingsPage() {
   await requireRole('ADMIN');
 
-  const settings = getSettings();
+  const settings = await getSettings();
 
   return (
     <div className="p-8 max-w-3xl mx-auto">

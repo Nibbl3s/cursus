@@ -404,3 +404,11 @@ model Achievement {
 
   @@unique([userId, achievementKey])
 }
+
+model PlatformSettings {
+  id                    String  @id @default("singleton")
+  defaultThemeId        String  @default("medieval")
+  aiMentorEnabled       Boolean @default(true)
+  peerReviewEnabled     Boolean @default(true)
+  selfAssessmentEnabled Boolean @default(true)
+}
