@@ -313,6 +313,8 @@ model Submission {
   postedAt            DateTime?
   boardPinned         Boolean          @default(false)
   boardHidden         Boolean          @default(false)
+
+  @@unique([assignmentId, userId])
 }
 
 model SelfAssessment {
