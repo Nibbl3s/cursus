@@ -445,8 +445,6 @@ Before building the dashboard, we need to ensure Submission records exist.
 
 ### Step 5.1 — getDailyTasks function
 
-Here at the moment
-
 **Context:** the entire **Multi-Course: getDailyTasks Logic** section.
 
 **Instruction:**
@@ -576,6 +574,8 @@ the **Points & Level Logic** section.
 > `theme.vocabulary.points`). Selecting a card saves the themeId via PATCH
 > `/api/profile/theme`. The page reloads after save so the ThemeProvider picks up
 > the new theme. Generate the PATCH route too."
+
+We are here.
 
 **Checkpoint:** student can switch from Medieval to Space Explorer and back. All
 vocabulary on the dashboard changes. XP is visible with the correct level

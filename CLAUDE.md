@@ -39,6 +39,8 @@ NextAuth 5 (beta) with the Prisma adapter. Only email magic links via Resend —
 
 Prisma with a `PrismaPg` adapter connecting to Supabase Postgres. The singleton client lives in [lib/prisma.ts](lib/prisma.ts). Two connection URLs are needed: `DATABASE_URL` (pooler, for runtime) and `DIRECT_URL` (direct, for `prisma migrate`).
 
+**Supabase is used only as a PostgreSQL host** — Supabase Auth, RLS, and `auth.uid()` are not used. All access control is enforced in Next.js via `requireRole()`.
+
 Key schema domains:
 - **Users/Auth**: `User`, `Profile`, `Account`, `Session`, `VerificationToken`
 - **Courses**: `Course`, `Enrollment`, `KnowledgeBase`
@@ -115,6 +117,23 @@ await prisma.$transaction([
 ### Assessment Modes
 
 Assignments support: `SELF_ASSESSED`, `PEER_REVIEW`, `SOCRATIC`, `TEACHER_GRADED`, `HYBRID`. Each mode has its own submission flow and feedback mechanisms.
+
+## Database & Prisma
+
+- Always use the DIRECT database URL (not pooler URL) for Prisma migrations
+- After `prisma db reset`, always run `prisma migrate deploy` to verify tables exist
+- When generating Prisma schema changes, include the migration command to run
+
+## Next.js / SSR Rules
+
+- Never use `Math.random()`, `Date.now()`, or other non-deterministic values during server-side rendering — always wrap in `useEffect` or use `suppressHydrationWarning`
+- When generating API routes, always verify the route path matches Next.js App Router conventions (`route.ts` not `route.js`, correct folder nesting)
+
+## Deployment (Vercel + Supabase)
+
+- Use `prisma generate` with the default engine (not WASM) to avoid OOM on Vercel
+- Always set `NEXTAUTH_URL` to the production URL, not localhost
+- Test build locally with `next build` before pushing deployment changes
 
 ## Environment Variables
 
