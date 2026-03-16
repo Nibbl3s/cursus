@@ -24,13 +24,20 @@ export default async function GradingPage({
       assignment: { courseId },
     },
     include: {
-      user: { select: { name: true, email: true } },
       assignment: { select: { id: true, title: true } },
       aiFeedback: {
         select: { overallScore: true, confidenceLevel: true, generatedAt: true },
       },
     },
   });
+
+  // Batch-fetch users for all submissions
+  const userIds = [...new Set(submissions.map((s) => s.userId))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, name: true, email: true },
+  });
+  const userMap = new Map(users.map((u) => [u.id, u]));
 
   // Sort low-confidence first (null treated as 0), then by submittedAt desc
   submissions.sort((a, b) => {
@@ -40,17 +47,20 @@ export default async function GradingPage({
     return (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0);
   });
 
-  const rows: GradingRow[] = submissions.map((s) => ({
-    submissionId: s.id,
-    studentName: s.user.name ?? s.user.email.split('@')[0],
-    assignmentTitle: s.assignment.title,
-    assignmentId: s.assignment.id,
-    aiScore: s.aiFeedback?.overallScore ?? null,
-    confidenceLevel: s.aiFeedback?.confidenceLevel ?? null,
-    aiFeedbackCreatedAt: s.aiFeedback?.generatedAt?.toISOString() ?? null,
-    submittedAt: s.submittedAt?.toISOString() ?? null,
-    status: s.status,
-  }));
+  const rows: GradingRow[] = submissions.map((s) => {
+    const user = userMap.get(s.userId);
+    return {
+      submissionId: s.id,
+      studentName: user ? (user.name ?? user.email.split('@')[0]) : s.userId,
+      assignmentTitle: s.assignment.title,
+      assignmentId: s.assignment.id,
+      aiScore: s.aiFeedback?.overallScore ?? null,
+      confidenceLevel: s.aiFeedback?.confidenceLevel ?? null,
+      aiFeedbackCreatedAt: s.aiFeedback?.generatedAt?.toISOString() ?? null,
+      submittedAt: s.submittedAt?.toISOString() ?? null,
+      status: s.status,
+    };
+  });
 
   return (
     <div className="p-8 space-y-8 max-w-5xl">

@@ -16,7 +16,6 @@ export default async function SubmissionDetailPage({
   const submission = await prisma.submission.findUnique({
     where: { id: submissionId },
     include: {
-      user: { select: { name: true, email: true } },
       assignment: {
         select: {
           id: true,
@@ -41,8 +40,13 @@ export default async function SubmissionDetailPage({
 
   if (!submission.content) notFound();
 
-  const { aiFeedback, assignment, user } = submission;
-  const studentName = user.name ?? user.email.split('@')[0];
+  const user = await prisma.user.findUnique({
+    where: { id: submission.userId },
+    select: { name: true, email: true },
+  });
+
+  const { aiFeedback, assignment } = submission;
+  const studentName = user ? (user.name ?? user.email.split('@')[0]) : submission.userId;
   const criteria = assignment.rubric?.criteria ?? [];
 
   // Map criterion scores JSON to typed array with labels
