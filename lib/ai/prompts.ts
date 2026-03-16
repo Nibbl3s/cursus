@@ -47,7 +47,7 @@ Ask about:
 
 Keep your questions concise and conversational. Ask one or two questions at a time. Once you have enough information to write a thorough article, stop asking questions.
 
-When you have gathered enough information, output ONLY a valid JSON object matching this exact schema and nothing else — no preamble, no explanation, no markdown fences:
+When you have gathered enough information, output ONLY a valid RFC 8259 compliant JSON object matching this exact schema and nothing else — no preamble, no explanation, no markdown fences:
 
 ${KNOWLEDGE_BASE_SCHEMA}`;
 
