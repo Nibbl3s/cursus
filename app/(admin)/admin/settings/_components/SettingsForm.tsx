@@ -12,12 +12,14 @@ const THEMES = [
 const PROVIDERS = [
   { id: 'anthropic',         label: 'Anthropic (Claude)' },
   { id: 'openai',            label: 'OpenAI (GPT / o-series)' },
+  { id: 'google',            label: 'Google (Gemini)' },
   { id: 'openai-compatible', label: 'OpenAI-compatible (Groq, Together, Mistral…)' },
 ] as const;
 
 const PROVIDER_MODEL_HINTS: Record<string, string> = {
-  anthropic:          'e.g. claude-sonnet-4-6, claude-opus-4-6',
-  openai:             'e.g. gpt-4o, o3, gpt-4o-mini',
+  anthropic:           'e.g. claude-sonnet-4-6, claude-opus-4-6',
+  openai:              'e.g. gpt-4o, o3, gpt-4o-mini',
+  google:              'e.g. gemini-2.0-flash, gemini-1.5-pro',
   'openai-compatible': 'e.g. llama-3.3-70b-versatile (Groq), mistral-large-latest',
 };
 

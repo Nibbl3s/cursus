@@ -102,6 +102,11 @@ export function createInterviewStream(options: InterviewStreamOptions): Readable
       try {
         if (options.provider === 'anthropic') {
           await streamAnthropic(options, controller);
+        } else if (options.provider === 'google') {
+          await streamOpenAICompat({
+            ...options,
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+          }, controller);
         } else {
           await streamOpenAICompat(options, controller);
         }
