@@ -27,28 +27,31 @@ interface Props {
   onComplete: (data: ImportedAssignment) => void;
 }
 
-// ---- SSE helpers ----------------------------------------------------------
+// ---- Normalized SSE event (matches lib/ai/providers.ts) -------------------
 
-function parseSseLine(line: string): unknown | null {
+type NormalizedEvent =
+  | { t: 'text';  v: string }
+  | { t: 'tool';  n: string; i: unknown }
+  | { t: 'done' }
+  | { t: 'error'; v: string };
+
+function parseSseLine(line: string): NormalizedEvent | null {
   if (!line.startsWith('data: ')) return null;
-  const payload = line.slice(6).trim();
-  if (payload === '[DONE]') return null;
-  try { return JSON.parse(payload); } catch { return null; }
+  try { return JSON.parse(line.slice(6).trim()) as NormalizedEvent; } catch { return null; }
 }
 
 // ---- Component ------------------------------------------------------------
 
 export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete }: Props) {
-  const [messages,   setMessages]   = useState<Message[]>([]);
-  const [input,      setInput]      = useState('');
-  const [streaming,  setStreaming]  = useState(false);
-  const [jobId,      setJobId]      = useState<string | null>(null);
-  const [done,       setDone]       = useState(false);
+  const [messages,  setMessages]  = useState<Message[]>([]);
+  const [input,     setInput]     = useState('');
+  const [streaming, setStreaming] = useState(false);
+  const [jobId,     setJobId]     = useState<string | null>(null);
+  const [done,      setDone]      = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef  = useRef<AbortController | null>(null);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -73,7 +76,6 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
 
     setStreaming(true);
 
-    // Build the Anthropic-shaped messages array (initial trigger is a bare "Hello")
     const apiMessages = nextMessages.length === 0
       ? [{ role: 'user', content: 'Hello' }]
       : nextMessages.map((m) => ({ role: m.role, content: m.content }));
@@ -101,14 +103,10 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
       }).catch(() => { /* non-fatal */ });
     }
 
-    // Start streaming
     const abort = new AbortController();
     abortRef.current = abort;
 
     let assistantText = '';
-    // tool_use accumulation
-    let inToolUse   = false;
-    let toolJson    = '';
 
     try {
       const res = await fetch('/api/ai/interview', {
@@ -118,13 +116,18 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
         signal: abort.signal,
       });
 
-      if (!res.ok || !res.body) throw new Error('Stream failed');
+      if (!res.ok || !res.body) {
+        // Surface the server error message if available
+        let detail = `HTTP ${res.status}`;
+        try { const j = await res.json(); detail = j.error ?? detail; } catch { /* ignore */ }
+        throw new Error(detail);
+      }
 
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
       let   buffer  = '';
 
-      // Append a placeholder assistant message
+      // Append a placeholder assistant bubble
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
       while (true) {
@@ -136,84 +139,61 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          const event = parseSseLine(line) as Record<string, unknown> | null;
+          const event = parseSseLine(line);
           if (!event) continue;
 
-          const type = event.type as string | undefined;
-
-          if (type === 'content_block_start') {
-            const block = event.content_block as Record<string, unknown>;
-            if (block?.type === 'tool_use' && block?.name === 'finalize_assignment') {
-              inToolUse = true;
-              toolJson  = '';
-            }
+          if (event.t === 'text') {
+            assistantText += event.v;
+            setMessages((prev) => {
+              const next = [...prev];
+              next[next.length - 1] = { role: 'assistant', content: assistantText };
+              return next;
+            });
           }
 
-          if (type === 'content_block_delta') {
-            const delta = event.delta as Record<string, unknown>;
+          if (event.t === 'tool' && event.n === 'finalize_assignment') {
+            const result = parseAssignmentImport(JSON.stringify((event.i as { assignment: unknown })?.assignment ?? event.i));
+            if (result.success) {
+              const data: AssignmentImport = result.data;
 
-            if (delta?.type === 'text_delta') {
-              assistantText += (delta.text as string) ?? '';
-              setMessages((prev) => {
-                const next = [...prev];
-                next[next.length - 1] = { role: 'assistant', content: assistantText };
-                return next;
+              if (currentJobId) {
+                fetch('/api/ai/generate', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ jobId: currentJobId, outputData: data, status: 'COMPLETE' }),
+                }).catch(() => { /* non-fatal */ });
+              }
+
+              setDone(true);
+              onComplete({
+                title:      data.title,
+                brief:      data.brief,
+                dueDate:    data.dueDate,
+                weight:     data.weight,
+                difficulty: data.difficulty,
+                pointValue: data.pointValue,
+                tasks:      data.tasks.map((t) => ({
+                  title:             t.title,
+                  taskType:          t.taskType,
+                  estimatedMins:     t.estimatedMins,
+                  pointValue:        t.pointValue,
+                  unlocksAfterIndex: t.unlocksAfterIndex,
+                })),
               });
             }
-
-            if (inToolUse && delta?.type === 'input_json_delta') {
-              toolJson += (delta.partial_json as string) ?? '';
-            }
           }
 
-          if (type === 'content_block_stop' && inToolUse) {
-            inToolUse = false;
-            // Parse the completed tool input
-            try {
-              const toolInput = JSON.parse(toolJson) as { assignment: unknown };
-              const result = parseAssignmentImport(JSON.stringify(toolInput.assignment));
-              if (result.success) {
-                const data: AssignmentImport = result.data;
-
-                // Persist completion
-                if (currentJobId) {
-                  fetch('/api/ai/generate', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      jobId:      currentJobId,
-                      outputData: data,
-                      status:     'COMPLETE',
-                    }),
-                  }).catch(() => { /* non-fatal */ });
-                }
-
-                setDone(true);
-                onComplete({
-                  title:      data.title,
-                  brief:      data.brief,
-                  dueDate:    data.dueDate,
-                  weight:     data.weight,
-                  difficulty: data.difficulty,
-                  pointValue: data.pointValue,
-                  tasks:      data.tasks.map((t) => ({
-                    title:             t.title,
-                    taskType:          t.taskType,
-                    estimatedMins:     t.estimatedMins,
-                    pointValue:        t.pointValue,
-                    unlocksAfterIndex: t.unlocksAfterIndex,
-                  })),
-                });
-              }
-            } catch { /* malformed tool JSON — continue */ }
+          if (event.t === 'error') {
+            throw new Error(event.v);
           }
         }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
+        const msg = err instanceof Error ? err.message : 'Something went wrong.';
         setMessages((prev) => {
           const next = [...prev];
-          next[next.length - 1] = { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' };
+          next[next.length - 1] = { role: 'assistant', content: `⚠️ ${msg} Please try again.` };
           return next;
         });
       }
@@ -239,10 +219,7 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
           <p className="text-xs text-gray-400 text-center pt-8">Starting interview…</p>
         )}
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[80%] px-3 py-2 rounded-xl text-sm whitespace-pre-wrap ${
                 msg.role === 'user'
@@ -261,7 +238,6 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
           </div>
         ))}
 
-        {/* Streaming indicator when no assistant bubble yet */}
         {streaming && messages.length === 0 && (
           <div className="flex justify-start">
             <div className="bg-gray-100 px-3 py-2 rounded-xl rounded-bl-sm">

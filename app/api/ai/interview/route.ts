@@ -1,50 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { getSettings } from '@/lib/platformSettings';
+import { createInterviewStream } from '@/lib/ai/providers';
 import { buildExportPrompt } from '@/lib/ai/prompts';
 
 export const maxDuration = 60;
-
-const client = new Anthropic();
-
-const FINALIZE_TOOL: Anthropic.Tool = {
-  name: 'finalize_assignment',
-  description:
-    'Call this when you have gathered all necessary information to generate the assignment. Pass the complete structured assignment as the argument.',
-  input_schema: {
-    type: 'object' as const,
-    properties: {
-      assignment: {
-        type: 'object',
-        properties: {
-          title:      { type: 'string' },
-          brief:      { type: 'string', description: 'markdown' },
-          dueDate:    { type: 'string', description: 'ISO 8601' },
-          weight:     { type: 'number', minimum: 0, maximum: 100 },
-          difficulty: { type: 'string', enum: ['EASY', 'MEDIUM', 'HARD', 'BOSS'] },
-          pointValue: { type: 'integer', minimum: 1 },
-          tasks: {
-            type: 'array',
-            minItems: 1,
-            items: {
-              type: 'object',
-              properties: {
-                title:             { type: 'string' },
-                taskType:          { type: 'string', enum: ['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC'] },
-                estimatedMins:     { type: 'integer', minimum: 1 },
-                pointValue:        { type: 'integer', minimum: 1 },
-                unlocksAfterIndex: { anyOf: [{ type: 'integer' }, { type: 'null' }], description: '0-based index of prerequisite task; null = always unlocked' },
-              },
-              required: ['title', 'taskType', 'estimatedMins', 'pointValue', 'unlocksAfterIndex'],
-            },
-          },
-        },
-        required: ['title', 'brief', 'dueDate', 'weight', 'difficulty', 'pointValue', 'tasks'],
-      },
-    },
-    required: ['assignment'],
-  },
-};
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -54,23 +14,29 @@ export async function POST(req: Request) {
 
   const { messages, jobType } = await req.json();
 
+  const settings = await getSettings();
+
+  if (!settings.aiApiKey) {
+    return NextResponse.json(
+      { error: 'No AI API key configured. Ask an admin to set one in Platform Settings.' },
+      { status: 503 },
+    );
+  }
+
   const systemPrompt = jobType === 'KNOWLEDGE_BASE_GENERATION'
     ? buildExportPrompt('knowledgeBase')
     : buildExportPrompt('assignment');
 
-  try {
-    const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
-      system: systemPrompt,
-      tools: [FINALIZE_TOOL],
-      messages,
-    });
+  const stream = createInterviewStream({
+    provider:     settings.aiProvider,
+    model:        settings.aiModel,
+    apiKey:       settings.aiApiKey,
+    baseUrl:      settings.aiBaseUrl || undefined,
+    messages,
+    systemPrompt,
+  });
 
-    return new Response(stream.toReadableStream());
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[ai/interview] Anthropic error:', message);
-    return NextResponse.json({ error: 'AI generation failed', detail: message }, { status: 500 });
-  }
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
 }

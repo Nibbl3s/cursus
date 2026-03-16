@@ -9,11 +9,23 @@ const THEMES = [
   { id: 'cyber',    label: 'Cyber City' },
 ] as const;
 
+const PROVIDERS = [
+  { id: 'anthropic',         label: 'Anthropic (Claude)' },
+  { id: 'openai',            label: 'OpenAI (GPT / o-series)' },
+  { id: 'openai-compatible', label: 'OpenAI-compatible (Groq, Together, Mistral…)' },
+] as const;
+
+const PROVIDER_MODEL_HINTS: Record<string, string> = {
+  anthropic:          'e.g. claude-sonnet-4-6, claude-opus-4-6',
+  openai:             'e.g. gpt-4o, o3, gpt-4o-mini',
+  'openai-compatible': 'e.g. llama-3.3-70b-versatile (Groq), mistral-large-latest',
+};
+
 export function SettingsForm({ initial }: { initial: PlatformSettings }) {
   const [settings, setSettings] = useState<PlatformSettings>(initial);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
+  const [saved,  setSaved]  = useState(false);
+  const [error,  setError]  = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +51,8 @@ export function SettingsForm({ initial }: { initial: PlatformSettings }) {
   function toggle(key: keyof PlatformSettings) {
     setSettings((s) => ({ ...s, [key]: !s[key] }));
   }
+
+  const isCompatible = settings.aiProvider === 'openai-compatible';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-xl">
@@ -94,6 +108,73 @@ export function SettingsForm({ initial }: { initial: PlatformSettings }) {
         </div>
       </section>
 
+      {/* AI Provider */}
+      <section className="rounded-xl border border-gray-200 bg-white p-5">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          AI Provider
+        </h2>
+        <p className="text-xs text-gray-400 mb-4">
+          Used for AI-assisted assignment creation and the AI Interview feature.
+          The API key is stored in the database — treat it like a password.
+        </p>
+        <div className="flex flex-col gap-4">
+          {/* Provider select */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Provider</label>
+            <select
+              value={settings.aiProvider}
+              onChange={(e) => setSettings((s) => ({ ...s, aiProvider: e.target.value }))}
+              className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              {PROVIDERS.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Model */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Model</label>
+            <input
+              value={settings.aiModel}
+              onChange={(e) => setSettings((s) => ({ ...s, aiModel: e.target.value }))}
+              placeholder={PROVIDER_MODEL_HINTS[settings.aiProvider] ?? 'Model name'}
+              className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <p className="mt-1 text-xs text-gray-400">{PROVIDER_MODEL_HINTS[settings.aiProvider]}</p>
+          </div>
+
+          {/* API Key */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">API Key</label>
+            <input
+              type="password"
+              value={settings.aiApiKey}
+              onChange={(e) => setSettings((s) => ({ ...s, aiApiKey: e.target.value }))}
+              placeholder="sk-…"
+              autoComplete="off"
+              className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            />
+          </div>
+
+          {/* Base URL — only for openai-compatible */}
+          {isCompatible && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Base URL</label>
+              <input
+                value={settings.aiBaseUrl}
+                onChange={(e) => setSettings((s) => ({ ...s, aiBaseUrl: e.target.value }))}
+                placeholder="https://api.groq.com/openai/v1"
+                className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                The base URL of the OpenAI-compatible API endpoint.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Submit */}
       <div className="flex items-center gap-3">
         <button
@@ -103,18 +184,15 @@ export function SettingsForm({ initial }: { initial: PlatformSettings }) {
         >
           {saving ? 'Saving…' : 'Save Settings'}
         </button>
-        {saved && <span className="text-sm text-green-600">Saved.</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
+        {saved  && <span className="text-sm text-green-600">Saved.</span>}
+        {error  && <span className="text-sm text-red-600">{error}</span>}
       </div>
     </form>
   );
 }
 
 function Toggle({
-  label,
-  description,
-  enabled,
-  onChange,
+  label, description, enabled, onChange,
 }: {
   label: string;
   description: string;

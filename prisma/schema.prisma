@@ -411,4 +411,9 @@ model PlatformSettings {
   aiMentorEnabled       Boolean @default(true)
   peerReviewEnabled     Boolean @default(true)
   selfAssessmentEnabled Boolean @default(true)
+  // AI provider configuration
+  aiProvider            String  @default("anthropic")
+  aiModel               String  @default("claude-sonnet-4-6")
+  aiApiKey              String  @default("")
+  aiBaseUrl             String  @default("")
 }

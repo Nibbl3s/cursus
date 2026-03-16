@@ -4,10 +4,14 @@ import { auth } from '@/auth';
 import { getSettings, saveSettings } from '@/lib/platformSettings';
 
 const schema = z.object({
-  defaultThemeId: z.enum(['medieval', 'space', 'cyber']),
-  aiMentorEnabled: z.boolean(),
-  peerReviewEnabled: z.boolean(),
+  defaultThemeId:       z.enum(['medieval', 'space', 'cyber']),
+  aiMentorEnabled:      z.boolean(),
+  peerReviewEnabled:    z.boolean(),
   selfAssessmentEnabled: z.boolean(),
+  aiProvider:           z.string().min(1),
+  aiModel:              z.string().min(1),
+  aiApiKey:             z.string(),
+  aiBaseUrl:            z.string(),
 });
 
 export async function GET() {
