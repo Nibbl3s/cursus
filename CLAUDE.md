@@ -48,6 +48,7 @@ Key schema domains:
 - **Assessment**: `Submission`, `SelfAssessment`, `SocraticDialogue`, `PeerReview`, `AIFeedback`
 - **Gamification**: `Habit`, `HabitCompletion`, `Achievement`, `Profile` (XP/level/streaks)
 - **AI Jobs**: `AIGenerationJob` (async queue for generation tasks)
+- **Platform Config**: `PlatformSettings` — singleton row (`id = "singleton"`); read/write via `lib/platformSettings.ts` (`getSettings()` / `saveSettings()`). Upsert pattern: `prisma.platformSettings.upsert({ where: { id: 'singleton' }, create: ..., update: ... })`
 
 ### Data Fetching
 
@@ -62,6 +63,10 @@ All under `app/api/`. Routes follow REST conventions:
 - `/api/assignments`, `/api/assignments/[assignmentId]` — CRUD
 - `/api/rubric`, `/api/tasks` — rubric and task management
 - `/api/completions` — canonical task completion endpoint: creates `TaskCompletion`, awards XP, updates streak, recalculates `Submission.progressPct`, runs `checkAchievements`. Returns `{ xp, level, newAchievements }`. Idempotent.
+- `/api/profile/theme` — PATCH updates `Profile.themeId` for the current student
+- `/api/admin/users` — GET all users (ADMIN only)
+- `/api/admin/users/[userId]` — GET / PATCH role / DELETE (hard-delete; self-deletion blocked)
+- `/api/admin/settings` — GET / PATCH `PlatformSettings` singleton
 - `/api/auth/[...nextauth]` — NextAuth handler
 
 Every API route checks `auth()` for session and role before acting. Input is validated with Zod `schema.safeParse()`; on failure return `{ error: parsed.error.flatten() }` at status 422. Use `notFound()` (not a 403) when a resource exists but the user doesn't own it — this hides resource existence.
@@ -134,6 +139,13 @@ Assignments support: `SELF_ASSESSED`, `PEER_REVIEW`, `SOCRATIC`, `TEACHER_GRADED
 - Use `prisma generate` with the default engine (not WASM) to avoid OOM on Vercel
 - Always set `NEXTAUTH_URL` to the production URL, not localhost
 - Test build locally with `next build` before pushing deployment changes
+- **Vercel filesystem is read-only** — never use `fs.writeFileSync` (or any write) in API routes or server components; it throws at runtime. Any state that needs to persist must go in the database.
+
+## Admin Patterns
+
+- Role changes via `PATCH /api/admin/users/[userId]` take effect on next login — the active session is not invalidated, which is intentional
+- User deletion (`DELETE /api/admin/users/[userId]`) is a hard Prisma delete that cascades; self-deletion is blocked with a 400
+- `components/admin/RoleSelector` and `components/admin/UserTable` are reusable across admin pages — `UserTable` owns client-side sort state, `RoleSelector` owns optimistic role state
 
 ## Environment Variables
 
