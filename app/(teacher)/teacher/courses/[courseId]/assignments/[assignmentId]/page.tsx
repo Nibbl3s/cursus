@@ -4,6 +4,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { requireRole } from '@/lib/auth/requireRole';
 import { prisma } from '@/lib/prisma';
 import { BriefPreview } from '@/components/teacher/BriefPreview';
+import { DeleteAssignmentButton } from './_components/DeleteAssignmentButton';
 
 type TaskType =
   | 'STUDY' | 'RESEARCH' | 'WRITING' | 'REVIEW'
@@ -121,12 +122,19 @@ export default async function AssignmentDetailPage({
           <h1 className="text-xl font-semibold text-gray-900">{assignment.title}</h1>
           <p className="text-xs text-gray-400 font-mono mt-0.5">{assignment.course.code}</p>
         </div>
-        <Link
-          href={`/teacher/courses/${courseId}/assignments/${assignmentId}/edit`}
-          className="shrink-0 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Edit assignment
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/teacher/courses/${courseId}/assignments/${assignmentId}/edit`}
+            className="shrink-0 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Edit
+          </Link>
+          <DeleteAssignmentButton
+            assignmentId={assignmentId}
+            courseId={courseId}
+            assignmentTitle={assignment.title}
+          />
+        </div>
       </div>
 
       {/* Meta row */}
