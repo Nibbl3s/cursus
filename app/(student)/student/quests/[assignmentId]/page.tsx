@@ -144,14 +144,15 @@ export default async function AssignmentDetailPage({ params }: Props) {
         )}
       </section>
 
-      {/* Work submission — shown when all tasks are complete */}
-      {allTasksDone && (
-        <SubmitWorkPanel
-          assignmentId={assignmentId}
-          initialContent={submission.content ?? null}
-          alreadySubmitted={hasSubmitted}
-        />
-      )}
+      {/* Work submission — always visible; locked until all tasks are done */}
+      <SubmitWorkPanel
+        assignmentId={assignmentId}
+        initialContent={submission.content ?? null}
+        alreadySubmitted={hasSubmitted}
+        isLocked={!allTasksDone}
+        tasksTotal={assignment.tasks.length}
+        tasksDone={completedTaskIds.size}
+      />
 
       {/* Feedback panel — shown when submission is released */}
       {isReleased && aiFeedback && (

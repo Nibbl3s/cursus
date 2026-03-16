@@ -10,9 +10,19 @@ interface Props {
   assignmentId: string;
   initialContent: string | null;
   alreadySubmitted: boolean;
+  isLocked: boolean;
+  tasksTotal: number;
+  tasksDone: number;
 }
 
-export function SubmitWorkPanel({ assignmentId, initialContent, alreadySubmitted }: Props) {
+export function SubmitWorkPanel({
+  assignmentId,
+  initialContent,
+  alreadySubmitted,
+  isLocked,
+  tasksTotal,
+  tasksDone,
+}: Props) {
   const router = useRouter();
   const [content, setContent] = useState(initialContent ?? '');
   const [saving, setSaving] = useState(false);
@@ -45,6 +55,27 @@ export function SubmitWorkPanel({ assignmentId, initialContent, alreadySubmitted
     } finally {
       setSaving(false);
     }
+  }
+
+  if (isLocked) {
+    return (
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wide mb-3">
+          Submit Work
+        </h2>
+        <div className="rounded-xl bg-white/5 border border-white/10 px-5 py-4 flex items-center gap-3">
+          <span className="text-lg">🔒</span>
+          <p className="text-sm text-white/50">
+            Complete all tasks to unlock submission
+            {tasksTotal > 0 && (
+              <span className="ml-1 text-white/30">
+                ({tasksDone}/{tasksTotal} done)
+              </span>
+            )}
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
