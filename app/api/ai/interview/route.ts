@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
   try {
     const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system: systemPrompt,
       tools: [FINALIZE_TOOL],
@@ -69,7 +69,8 @@ export async function POST(req: Request) {
 
     return new Response(stream.toReadableStream());
   } catch (err) {
-    console.error('[ai/interview]', err);
-    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[ai/interview] Anthropic error:', message);
+    return NextResponse.json({ error: 'AI generation failed', detail: message }, { status: 500 });
   }
 }
