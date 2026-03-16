@@ -128,13 +128,9 @@ ESM-only packages (e.g. `@uiw/react-md-editor`) must be loaded with `dynamic(() 
 
 `TaskBuilder` uses the HTML5 Drag and Drop API directly (no library) to reorder tasks and remap `unlocksAfterIndex` dependencies. `lib/ensureSubmission.ts` provides a Prisma upsert helper that guarantees a `Submission` row exists before creating `TaskCompletion` records.
 
-**Rubric deletion**: `RubricCriterion` has no cascade delete. Always delete criteria before deleting the rubric, or use a transaction:
-```typescript
-await prisma.$transaction([
-  prisma.rubricCriterion.deleteMany({ where: { rubric: { assignmentId } } }),
-  prisma.rubric.deleteMany({ where: { assignmentId } }),
-]);
-```
+**Cascade deletions**: The schema has almost no `onDelete: Cascade` rules, so deletions must be done manually in FK dependency order inside a `$transaction`. The assignment deletion in `DELETE /api/assignments/[assignmentId]` is the canonical example — it deletes in this order:
+`SocraticDialogue` → `AIFeedback` → `PeerReview` → `SelfAssessment` → `Submission` → `TaskCompletion` → `Task` → `RubricCriterion` → `Rubric` → `AnchorSubmission` → `PeerReviewConfig` → `Assignment`.
+Follow the same pattern for any other resource that owns child records.
 
 **Hydration**: `Math.random()` and `Date.now()` in `'use client'` components cause React error #418 (server/client HTML mismatch). Set them in `useEffect` with a `null` initial state.
 
