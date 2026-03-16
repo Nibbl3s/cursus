@@ -34,8 +34,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Replace existing rubric if present, then create fresh
-  await prisma.rubric.deleteMany({ where: { assignmentId } });
+  // Replace existing rubric if present — delete criteria first to satisfy FK constraint
+  await prisma.$transaction([
+    prisma.rubricCriterion.deleteMany({ where: { rubric: { assignmentId } } }),
+    prisma.rubric.deleteMany({ where: { assignmentId } }),
+  ]);
 
   const rubric = await prisma.rubric.create({
     data: {
