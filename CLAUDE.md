@@ -62,12 +62,13 @@ All under `app/api/`. Routes follow REST conventions:
 - `/api/courses/[courseId]/enroll` — student enrollment (by email lookup)
 - `/api/assignments`, `/api/assignments/[assignmentId]` — CRUD
 - `/api/rubric`, `/api/tasks` — rubric and task management
-- `/api/completions` — canonical task completion endpoint: creates `TaskCompletion`, awards XP, updates streak, recalculates `Submission.progressPct`, runs `checkAchievements`. Returns `{ xp, level, newAchievements }`. Idempotent.
+- `/api/completions` — canonical task completion endpoint: creates `TaskCompletion`, awards XP, updates streak, recalculates `Submission.progressPct`, runs `checkAchievements`. Returns `{ xp, level, newAchievements }`. Idempotent. Prefer this over `/api/tasks/[taskId]/complete`.
+- `/api/tasks/[taskId]/complete` — legacy simpler completion: upserts `TaskCompletion` and updates `Submission.progressPct` only (no XP, no streak, no achievements). Kept for compatibility.
 - `/api/profile/theme` — PATCH updates `Profile.themeId` for the current student
 - `/api/admin/users` — GET all users (ADMIN only)
 - `/api/admin/users/[userId]` — GET / PATCH role / DELETE (hard-delete; self-deletion blocked)
 - `/api/admin/settings` — GET / PATCH `PlatformSettings` singleton (includes AI provider config)
-- `/api/ai/interview` — POST streaming endpoint; reads provider config from DB, calls `createInterviewStream()`, streams normalized SSE back. Returns 503 if no API key is configured. `export const maxDuration = 60` for Vercel.
+- `/api/ai/interview` — POST streaming endpoint; reads provider config from DB, calls `createInterviewStream()`, streams normalized SSE back. Returns 503 if no API key is configured.
 - `/api/ai/generate` — POST create / PATCH update `AIGenerationJob` records for interview persistence
 - `/api/auth/[...nextauth]` — NextAuth handler
 
@@ -150,6 +151,7 @@ Assignments support: `SELF_ASSESSED`, `PEER_REVIEW`, `SOCRATIC`, `TEACHER_GRADED
 
 - Never use `Math.random()`, `Date.now()`, or other non-deterministic values during server-side rendering — always wrap in `useEffect` or use `suppressHydrationWarning`
 - When generating API routes, always verify the route path matches Next.js App Router conventions (`route.ts` not `route.js`, correct folder nesting)
+- **Never use `export const runtime = 'edge'`** on any route that imports Prisma — Prisma requires the Node.js runtime. For streaming AI routes that need more than 10 s, use `export const maxDuration = 60` instead (keeps the Node.js runtime, works on Vercel Hobby; Pro allows up to 300 s).
 
 ## Deployment (Vercel + Supabase)
 
