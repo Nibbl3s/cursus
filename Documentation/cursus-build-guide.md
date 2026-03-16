@@ -575,8 +575,6 @@ the **Points & Level Logic** section.
 > `/api/profile/theme`. The page reloads after save so the ThemeProvider picks up
 > the new theme. Generate the PATCH route too."
 
-We are here.
-
 **Checkpoint:** student can switch from Medieval to Space Explorer and back. All
 vocabulary on the dashboard changes. XP is visible with the correct level
 calculation.
@@ -728,6 +726,8 @@ the API code block.
 **Checkpoint:** teacher can create an assignment in all three modes. The import
 mode correctly validates and rejects malformed JSON. The AI interview mode
 completes and pre-fills the form.
+
+We are here.
 
 ---
 

@@ -75,6 +75,12 @@ export default async function CourseDetailPage({
             Edit course
           </Link>
           <Link
+            href={`/teacher/courses/${courseId}/knowledge`}
+            className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Knowledge base
+          </Link>
+          <Link
             href={`/teacher/courses/${courseId}/assignments/new`}
             className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >

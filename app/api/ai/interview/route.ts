@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     baseUrl:      settings.aiBaseUrl || undefined,
     messages,
     systemPrompt,
+    jobType,
   });
 
   return new Response(stream, {

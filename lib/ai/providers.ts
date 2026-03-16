@@ -21,7 +21,7 @@ function sseChunk(event: NormalizedEvent): Uint8Array {
 }
 
 // ---------------------------------------------------------------------------
-// finalize_assignment tool definitions (one per API format)
+// Tool definitions (one per API format)
 // ---------------------------------------------------------------------------
 
 const FINALIZE_INPUT_SCHEMA = {
@@ -79,6 +79,37 @@ const OPENAI_TOOL = {
 };
 
 // ---------------------------------------------------------------------------
+// finalize_knowledge_base tool definitions
+// ---------------------------------------------------------------------------
+
+const FINALIZE_KB_INPUT_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    title:   { type: 'string' },
+    content: { type: 'string', description: 'Markdown content for the knowledge base article' },
+  },
+  required: ['title', 'content'],
+};
+
+const KB_TOOL_DESCRIPTION =
+  'Call this when you have gathered all necessary information to write the knowledge base article. Pass the complete article as the argument.';
+
+const ANTHROPIC_KB_TOOL: Anthropic.Tool = {
+  name: 'finalize_knowledge_base',
+  description: KB_TOOL_DESCRIPTION,
+  input_schema: FINALIZE_KB_INPUT_SCHEMA,
+};
+
+const OPENAI_KB_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'finalize_knowledge_base',
+    description: KB_TOOL_DESCRIPTION,
+    parameters: FINALIZE_KB_INPUT_SCHEMA,
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Public interface
 // ---------------------------------------------------------------------------
 
@@ -89,6 +120,7 @@ export interface InterviewStreamOptions {
   baseUrl?: string;
   messages: { role: string; content: string }[];
   systemPrompt: string;
+  jobType?: 'ASSIGNMENT_GENERATION' | 'KNOWLEDGE_BASE_GENERATION';
 }
 
 /**
@@ -130,11 +162,13 @@ async function streamAnthropic(
 ) {
   const client = new Anthropic({ apiKey: options.apiKey || undefined });
 
+  const tool = options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? ANTHROPIC_KB_TOOL : ANTHROPIC_TOOL;
+
   const stream = client.messages.stream({
     model: options.model,
     max_tokens: 1000,
     system: options.systemPrompt,
-    tools: [ANTHROPIC_TOOL],
+    tools: [tool],
     messages: options.messages as Anthropic.MessageParam[],
   });
 
@@ -172,6 +206,7 @@ async function streamOpenAICompat(
   controller: ReadableStreamDefaultController<Uint8Array>,
 ) {
   const base = (options.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '');
+  const tool = options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? OPENAI_KB_TOOL : OPENAI_TOOL;
 
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
@@ -183,7 +218,7 @@ async function streamOpenAICompat(
       model: options.model,
       max_tokens: 1000,
       stream: true,
-      tools: [OPENAI_TOOL],
+      tools: [tool],
       tool_choice: 'auto',
       messages: [
         { role: 'system', content: options.systemPrompt },
