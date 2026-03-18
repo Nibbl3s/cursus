@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { ensureSubmission } from '@/lib/ensureSubmission';
 import { getLevelFromXP } from '@/lib/points';
 import { checkAchievements, AchievementStats } from '@/lib/achievements';
 import { isSameDay, isYesterday } from 'date-fns';
 
-const schema = z.object({ taskId: z.string() });
+const schema = z.object({
+  taskId:         z.string(),
+  completionData: z.record(z.string(), z.unknown()).optional(),
+});
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
-  const { taskId } = parsed.data;
+  const { taskId, completionData } = parsed.data;
 
   // Load the task and its parent assignment
   const task = await prisma.task.findUnique({
@@ -45,7 +49,12 @@ export async function POST(req: Request) {
   }
 
   await prisma.taskCompletion.create({
-    data: { taskId, userId, pointsAwarded: task.pointValue },
+    data: {
+      taskId,
+      userId,
+      pointsAwarded: task.pointValue,
+      ...(completionData ? { completionData: completionData as Prisma.InputJsonValue } : {}),
+    },
   });
 
   // 3. Update Profile: totalPoints, level, streak
@@ -84,22 +93,34 @@ export async function POST(req: Request) {
     },
   });
 
-  // 4. Recalculate Submission.progressPct
-  const [totalTasks, completedTasks] = await Promise.all([
-    prisma.task.count({ where: { assignmentId: task.assignmentId } }),
+  // 4. Recalculate Submission.progressPct (required tasks only — optional tasks don't count toward progress)
+  const [totalRequired, completedRequired] = await Promise.all([
+    prisma.task.count({ where: { assignmentId: task.assignmentId, isOptional: false } }),
     prisma.taskCompletion.count({
-      where: { userId, task: { assignmentId: task.assignmentId } },
+      where: { userId, task: { assignmentId: task.assignmentId, isOptional: false } },
     }),
   ]);
-  const progressPct = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const progressPct = totalRequired > 0 ? (completedRequired / totalRequired) * 100 : 0;
+  const allRequiredDone = totalRequired > 0 && completedRequired >= totalRequired;
 
-  await prisma.submission.update({
-    where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
-    data: {
-      progressPct,
-      status: progressPct >= 100 ? 'SUBMITTED' : 'IN_PROGRESS',
-    },
-  });
+  if (allRequiredDone) {
+    // Compile all completion data into a structured submission
+    const allCompletions = await prisma.taskCompletion.findMany({
+      where: { userId, task: { assignmentId: task.assignmentId } },
+      select: { taskId: true, completionData: true },
+    });
+    const compiled = JSON.stringify(allCompletions, null, 2);
+
+    await prisma.submission.update({
+      where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
+      data: { progressPct, status: 'SUBMITTED', content: compiled },
+    });
+  } else {
+    await prisma.submission.update({
+      where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
+      data: { progressPct, status: 'IN_PROGRESS' },
+    });
+  }
 
   // 5. Check achievements
   const quizzesCompleted = await prisma.taskCompletion.count({
