@@ -62,6 +62,9 @@ enum TaskType {
   REFLECTION
   PEER_REVIEW
   SOCRATIC
+  GUIDED_QUESTIONS
+  FILE_UPLOAD
+  PEER_BOARD
 }
 
 enum SubmissionStatus {
@@ -222,6 +225,7 @@ model Assignment {
   difficulty       Difficulty        @default(MEDIUM)
   pointValue       Int               @default(100)
   assessmentMode   AssessmentMode    @default(SELF_ASSESSED)
+  scenarioText     String?           // immersive real-world scenario shown in the lobby
   createdAt        DateTime          @default(now())
   tasks            Task[]
   submissions      Submission[]
@@ -277,8 +281,15 @@ model Task {
   estimatedMins Int             @default(30)
   pointValue    Int             @default(20)
   order         Int             @default(0)
-  unlocksAfter  String?
-  completions   TaskCompletion[]
+  unlocksAfter      String?
+  prompt            String?   // the challenge description shown to the student
+  starterFileUrl    String?   // downloadable template/dataset for FILE_UPLOAD tasks
+  resourceLinks     String[]  // optional reference URLs shown alongside the prompt
+  isOptional        Boolean   @default(false) // marks task as an exploration branch
+  guidedQuestions   Json?     // [{question: string, hint: string}]
+  learningObjective String?   // for SOCRATIC tasks; guides AI and signals completion
+  completions       TaskCompletion[]
+  socraticDialogues SocraticDialogue[]
 }
 
 model TaskCompletion {
@@ -286,8 +297,9 @@ model TaskCompletion {
   taskId        String
   userId        String
   task          Task     @relation(fields: [taskId], references: [id])
-  completedAt   DateTime @default(now())
-  pointsAwarded Int
+  completedAt     DateTime @default(now())
+  pointsAwarded   Int
+  completionData  Json?    // answers, file URL, transcript ref, board post ID, etc.
 
   @@unique([taskId, userId])
 }
@@ -335,6 +347,8 @@ model SocraticDialogue {
   submission       Submission?     @relation(fields: [submissionId], references: [id])
   selfAssessmentId String?         @unique
   selfAssessment   SelfAssessment? @relation(fields: [selfAssessmentId], references: [id])
+  taskId           String?         // null = submission-level (existing); set = task-level SOCRATIC task
+  task             Task?           @relation(fields: [taskId], references: [id])
   transcript       Json
   understandingReport Json
   completedAt      DateTime        @default(now())
