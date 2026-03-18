@@ -48,14 +48,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ xp: profile.totalPoints, level: profile.level, newAchievements: [] });
   }
 
-  await prisma.taskCompletion.create({
-    data: {
-      taskId,
-      userId,
-      pointsAwarded: task.pointValue,
-      ...(completionData ? { completionData: completionData as Prisma.InputJsonValue } : {}),
-    },
-  });
+  try {
+    await prisma.taskCompletion.create({
+      data: {
+        taskId,
+        userId,
+        pointsAwarded: task.pointValue,
+        ...(completionData ? { completionData: completionData as Prisma.InputJsonValue } : {}),
+      },
+    });
+  } catch (err: unknown) {
+    // Handle concurrent double-submit: unique constraint violation means already completed
+    if ((err as { code?: string })?.code === 'P2002') {
+      return NextResponse.json({ xp: 0, level: 0, newAchievements: [] });
+    }
+    throw err;
+  }
 
   // 3. Update Profile: totalPoints, level, streak
   const profile = await prisma.profile.findUniqueOrThrow({
@@ -103,7 +111,14 @@ export async function POST(req: Request) {
   const progressPct = totalRequired > 0 ? (completedRequired / totalRequired) * 100 : 0;
   const allRequiredDone = totalRequired > 0 && completedRequired >= totalRequired;
 
-  if (allRequiredDone) {
+  // Don't overwrite already-graded or released submissions
+  const currentSubmission = await prisma.submission.findUnique({
+    where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
+    select: { status: true, releasedAt: true },
+  });
+  const alreadyFinalized = currentSubmission?.releasedAt != null || currentSubmission?.status === 'RELEASED';
+
+  if (allRequiredDone && !alreadyFinalized) {
     // Compile all completion data into a structured submission
     const allCompletions = await prisma.taskCompletion.findMany({
       where: { userId, task: { assignmentId: task.assignmentId } },
@@ -113,12 +128,17 @@ export async function POST(req: Request) {
 
     await prisma.submission.update({
       where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
-      data: { progressPct, status: 'SUBMITTED', content: compiled },
+      data: { progressPct, status: 'SUBMITTED', content: compiled, submittedAt: new Date() },
     });
-  } else {
+  } else if (!allRequiredDone && !alreadyFinalized) {
     await prisma.submission.update({
       where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
       data: { progressPct, status: 'IN_PROGRESS' },
+    });
+  } else if (alreadyFinalized) {
+    await prisma.submission.update({
+      where: { assignmentId_userId: { assignmentId: task.assignmentId, userId } },
+      data: { progressPct },
     });
   }
 
