@@ -284,7 +284,7 @@ model Task {
   unlocksAfter      String?
   prompt            String?   // the challenge description shown to the student
   starterFileUrl    String?   // downloadable template/dataset for FILE_UPLOAD tasks
-  resourceLinks     String[]  // optional reference URLs shown alongside the prompt
+  resourceLinks     String[]  @default([]) // optional reference URLs shown alongside the prompt
   isOptional        Boolean   @default(false) // marks task as an exploration branch
   guidedQuestions   Json?     // [{question: string, hint: string}]
   learningObjective String?   // for SOCRATIC tasks; guides AI and signals completion
@@ -352,6 +352,8 @@ model SocraticDialogue {
   transcript       Json
   understandingReport Json
   completedAt      DateTime        @default(now())
+
+  @@index([taskId])
 }
 
 model PeerReview {
