@@ -40,6 +40,12 @@ export async function PATCH(
   const teacherOverride =
     submission.aiFeedback !== null && finalScore !== submission.aiFeedback.overallScore;
 
+  const masteryLevel =
+    finalScore >= 90 ? 'ADVANCED'
+    : finalScore >= 70 ? 'PROFICIENT'
+    : finalScore >= 50 ? 'DEVELOPING'
+    : 'BEGINNING';
+
   await prisma.$transaction([
     prisma.submission.update({
       where: { id: submissionId },
@@ -48,6 +54,7 @@ export async function PATCH(
         status: 'RELEASED',
         releasedAt: new Date(),
         teacherOverride,
+        masteryLevel,
       },
     }),
     ...(submission.aiFeedback

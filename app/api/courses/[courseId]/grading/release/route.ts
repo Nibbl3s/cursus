@@ -36,7 +36,7 @@ export async function POST(
         generatedAt: { lte: cutoff },
       },
     },
-    select: { id: true },
+    select: { id: true, aiFeedback: { select: { overallScore: true } } },
   });
 
   if (releasable.length === 0) {
@@ -44,10 +44,21 @@ export async function POST(
   }
 
   const now = new Date();
-  await prisma.submission.updateMany({
-    where: { id: { in: releasable.map((s) => s.id) } },
-    data: { status: 'RELEASED', releasedAt: now },
-  });
+
+  await prisma.$transaction(
+    releasable.map((s) => {
+      const finalScore = s.aiFeedback?.overallScore ?? 0;
+      const masteryLevel =
+        finalScore >= 90 ? 'ADVANCED'
+        : finalScore >= 70 ? 'PROFICIENT'
+        : finalScore >= 50 ? 'DEVELOPING'
+        : 'BEGINNING';
+      return prisma.submission.update({
+        where: { id: s.id },
+        data: { status: 'RELEASED', releasedAt: now, finalScore, masteryLevel },
+      });
+    }),
+  );
 
   return NextResponse.json({ released: releasable.length });
 }
