@@ -204,14 +204,20 @@ await prisma.taskCompletion.create({
 Auto-submission must trigger when all **required** tasks are done, not when `progressPct >= 100` (which counts optional tasks too). Replace the existing `prisma.submission.update` call (the one that sets `progressPct` and `status`) with:
 
 ```typescript
-// Check required-task completion separately from progressPct
+// progressPct is based on required tasks only — optional tasks don't count toward progress
+// so the ring always reaches 100% when the required work is done.
 const [totalRequired, completedRequired] = await Promise.all([
   prisma.task.count({ where: { assignmentId: task.assignmentId, isOptional: false } }),
   prisma.taskCompletion.count({
     where: { userId, task: { assignmentId: task.assignmentId, isOptional: false } },
   }),
 ]);
+const progressPct = totalRequired > 0 ? (completedRequired / totalRequired) * 100 : 0;
 const allRequiredDone = totalRequired > 0 && completedRequired >= totalRequired;
+
+// NOTE: The existing progressPct calculation (lines above this in the file) counts
+// ALL tasks. Replace that entire block with the required-only counts above and
+// remove the old totalTasks/completedTasks Promise.all.
 
 if (allRequiredDone) {
   // Compile all completion data into a structured submission
@@ -1756,7 +1762,7 @@ export function PeerBoardTask({ task, onComplete, alreadyCompleted }: Props) {
 
       <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
         <p className="text-xs text-indigo-300/70">
-          Your response will be visible to your classmates. Share your genuine thinking — there's more value in an honest attempt than a polished answer.
+          Share your genuine thinking — there's more value in an honest attempt than a polished answer.
         </p>
       </div>
 
