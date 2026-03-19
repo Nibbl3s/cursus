@@ -8,22 +8,26 @@ import { DeleteAssignmentButton } from './_components/DeleteAssignmentButton';
 
 type TaskType =
   | 'STUDY' | 'RESEARCH' | 'WRITING' | 'REVIEW'
-  | 'QUIZ'  | 'PRACTICE' | 'REFLECTION' | 'PEER_REVIEW' | 'SOCRATIC';
+  | 'QUIZ'  | 'PRACTICE' | 'REFLECTION' | 'PEER_REVIEW' | 'SOCRATIC'
+  | 'GUIDED_QUESTIONS' | 'FILE_UPLOAD' | 'PEER_BOARD';
 
 type Difficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'BOSS';
 type AssessmentMode = 'SELF_ASSESSED' | 'PEER_REVIEW' | 'SOCRATIC' | 'TEACHER_GRADED' | 'HYBRID';
 type SubmissionStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'AI_GRADED' | 'TEACHER_REVIEWED' | 'RELEASED';
 
 const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  STUDY:       'Study',
-  RESEARCH:    'Research',
-  WRITING:     'Writing',
-  REVIEW:      'Review',
-  QUIZ:        'Quiz',
-  PRACTICE:    'Practice',
-  REFLECTION:  'Reflection',
-  PEER_REVIEW: 'Peer review',
-  SOCRATIC:    'Socratic',
+  STUDY:            'Study',
+  RESEARCH:         'Research',
+  WRITING:          'Writing',
+  REVIEW:           'Review',
+  QUIZ:             'Quiz',
+  PRACTICE:         'Practice',
+  REFLECTION:       'Reflection',
+  PEER_REVIEW:      'Peer review',
+  SOCRATIC:         'Socratic',
+  GUIDED_QUESTIONS: 'Guided questions',
+  FILE_UPLOAD:      'File upload',
+  PEER_BOARD:       'Peer board',
 };
 
 const DIFFICULTY_STYLES: Record<Difficulty, string> = {

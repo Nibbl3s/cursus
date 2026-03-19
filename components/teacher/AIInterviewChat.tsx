@@ -178,6 +178,11 @@ export function AIInterviewChat({ jobType = 'ASSIGNMENT_GENERATION', onComplete 
                   estimatedMins:     t.estimatedMins,
                   pointValue:        t.pointValue,
                   unlocksAfterIndex: t.unlocksAfterIndex,
+                  prompt:            '',
+                  isOptional:        false,
+                  learningObjective: '',
+                  guidedQuestions:   [],
+                  starterFileUrl:    '',
                 })),
               });
             }

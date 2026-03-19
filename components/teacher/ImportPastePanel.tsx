@@ -47,6 +47,11 @@ export function ImportPastePanel({ onImport }: Props) {
         estimatedMins:     t.estimatedMins,
         pointValue:        t.pointValue,
         unlocksAfterIndex: t.unlocksAfterIndex,
+        prompt:            '',
+        isOptional:        false,
+        learningObjective: '',
+        guidedQuestions:   [],
+        starterFileUrl:    '',
       })),
     });
   }

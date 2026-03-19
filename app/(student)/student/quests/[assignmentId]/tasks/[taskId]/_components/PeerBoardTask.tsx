@@ -50,7 +50,7 @@ export function PeerBoardTask({ task, onComplete, alreadyCompleted }: Props) {
 
       <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
         <p className="text-xs text-indigo-300/70">
-          Share your genuine thinking — there's more value in an honest attempt than a polished answer.
+          Share your genuine thinking — there&apos;s more value in an honest attempt than a polished answer.
         </p>
       </div>
 

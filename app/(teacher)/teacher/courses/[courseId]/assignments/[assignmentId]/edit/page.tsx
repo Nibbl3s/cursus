@@ -35,6 +35,11 @@ export default async function EditAssignmentPage({
     estimatedMins:     t.estimatedMins,
     pointValue:        t.pointValue,
     unlocksAfterIndex: t.unlocksAfter ? (taskIdToIndex.get(t.unlocksAfter) ?? null) : null,
+    prompt:            t.prompt            ?? '',
+    isOptional:        t.isOptional        ?? false,
+    learningObjective: t.learningObjective ?? '',
+    guidedQuestions:   Array.isArray(t.guidedQuestions) ? (t.guidedQuestions as { question: string; hint: string }[]) : [],
+    starterFileUrl:    t.starterFileUrl    ?? '',
   }));
 
   return (

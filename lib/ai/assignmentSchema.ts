@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const TaskImportSchema = z.object({
   title: z.string(),
-  taskType: z.enum(['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC']),
+  taskType: z.enum(['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC', 'GUIDED_QUESTIONS', 'FILE_UPLOAD', 'PEER_BOARD']),
   estimatedMins: z.number().int().positive(),
   pointValue: z.number().int().positive(),
   unlocksAfterIndex: z.number().int().nullable(), // index into tasks array, null = unlocked

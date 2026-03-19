@@ -5,10 +5,19 @@ import { prisma } from '@/lib/prisma';
 
 const taskDraftSchema = z.object({
   title:             z.string().min(1),
-  taskType:          z.enum(['STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ', 'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC']),
+  taskType:          z.enum([
+    'STUDY', 'RESEARCH', 'WRITING', 'REVIEW', 'QUIZ',
+    'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC',
+    'GUIDED_QUESTIONS', 'FILE_UPLOAD', 'PEER_BOARD',
+  ]),
   estimatedMins:     z.number().min(1),
   pointValue:        z.number().min(1),
   unlocksAfterIndex: z.number().nullable(),
+  prompt:            z.string().optional(),
+  isOptional:        z.boolean().optional(),
+  learningObjective: z.string().optional(),
+  guidedQuestions:   z.array(z.object({ question: z.string(), hint: z.string() })).optional(),
+  starterFileUrl:    z.string().optional(),
 });
 
 const bodySchema = z.object({
@@ -47,13 +56,19 @@ export async function POST(req: Request) {
     tasks.map((t, order) =>
       prisma.task.create({
         data: {
-          title:         t.title,
-          taskType:      t.taskType,
-          estimatedMins: t.estimatedMins,
-          pointValue:    t.pointValue,
+          title:             t.title,
+          taskType:          t.taskType,
+          estimatedMins:     t.estimatedMins,
+          pointValue:        t.pointValue,
           order,
           assignmentId,
-          courseId:      assignment.course.id,
+          courseId:          assignment.course.id,
+          prompt:            t.prompt            || null,
+          isOptional:        t.isOptional        ?? false,
+          learningObjective: t.learningObjective || null,
+          guidedQuestions:   t.guidedQuestions   ?? [],
+          starterFileUrl:    t.starterFileUrl    || null,
+          resourceLinks:     [],
         },
       }),
     ),

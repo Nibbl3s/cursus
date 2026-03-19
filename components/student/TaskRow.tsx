@@ -6,15 +6,18 @@ import { TaskType } from '@prisma/client';
 import { CourseColorDot } from '@/components/shared/CourseColorDot';
 
 const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  STUDY: 'Study',
-  RESEARCH: 'Research',
-  WRITING: 'Writing',
-  REVIEW: 'Review',
-  QUIZ: 'Quiz',
-  PRACTICE: 'Practice',
-  REFLECTION: 'Reflection',
-  PEER_REVIEW: 'Peer Review',
-  SOCRATIC: 'Socratic',
+  STUDY:            'Study',
+  RESEARCH:         'Research',
+  WRITING:          'Writing',
+  REVIEW:           'Review',
+  QUIZ:             'Quiz',
+  PRACTICE:         'Practice',
+  REFLECTION:       'Reflection',
+  PEER_REVIEW:      'Peer Review',
+  SOCRATIC:         'Socratic',
+  GUIDED_QUESTIONS: 'Guided Questions',
+  FILE_UPLOAD:      'File Upload',
+  PEER_BOARD:       'Peer Board',
 };
 
 interface TaskRowProps {

@@ -8,27 +8,37 @@ export interface TaskDraft {
   estimatedMins:      number;
   pointValue:         number;
   unlocksAfterIndex:  number | null; // index into this tasks array; null = always unlocked
+  prompt:             string;
+  isOptional:         boolean;
+  learningObjective:  string;
+  guidedQuestions:    { question: string; hint: string }[];
+  starterFileUrl:     string;
 }
 
 type TaskType =
   | 'STUDY' | 'RESEARCH' | 'WRITING' | 'REVIEW'
-  | 'QUIZ'  | 'PRACTICE' | 'REFLECTION' | 'PEER_REVIEW' | 'SOCRATIC';
+  | 'QUIZ'  | 'PRACTICE' | 'REFLECTION' | 'PEER_REVIEW' | 'SOCRATIC'
+  | 'GUIDED_QUESTIONS' | 'FILE_UPLOAD' | 'PEER_BOARD';
 
 const TASK_TYPES: TaskType[] = [
   'STUDY', 'RESEARCH', 'WRITING', 'REVIEW',
   'QUIZ',  'PRACTICE', 'REFLECTION', 'PEER_REVIEW', 'SOCRATIC',
+  'GUIDED_QUESTIONS', 'FILE_UPLOAD', 'PEER_BOARD',
 ];
 
 const TYPE_LABELS: Record<TaskType, string> = {
-  STUDY:       'Study',
-  RESEARCH:    'Research',
-  WRITING:     'Writing',
-  REVIEW:      'Review',
-  QUIZ:        'Quiz',
-  PRACTICE:    'Practice',
-  REFLECTION:  'Reflection',
-  PEER_REVIEW: 'Peer review',
-  SOCRATIC:    'Socratic',
+  STUDY:            'Study',
+  RESEARCH:         'Research',
+  WRITING:          'Writing',
+  REVIEW:           'Review',
+  QUIZ:             'Quiz',
+  PRACTICE:         'Practice',
+  REFLECTION:       'Reflection',
+  PEER_REVIEW:      'Peer review',
+  SOCRATIC:         'Socratic',
+  GUIDED_QUESTIONS: 'Guided questions',
+  FILE_UPLOAD:      'File upload',
+  PEER_BOARD:       'Peer board',
 };
 
 const EMPTY_TASK: TaskDraft = {
@@ -37,6 +47,11 @@ const EMPTY_TASK: TaskDraft = {
   estimatedMins:     30,
   pointValue:        20,
   unlocksAfterIndex: null,
+  prompt:            '',
+  isOptional:        false,
+  learningObjective: '',
+  guidedQuestions:   [],
+  starterFileUrl:    '',
 };
 
 interface Props {
@@ -206,6 +221,88 @@ export function TaskBuilder({ tasks, onChange }: Props) {
                   </select>
                 </div>
               </div>
+              {/* Prompt */}
+              <textarea
+                value={task.prompt}
+                onChange={(e) => update(i, 'prompt', e.target.value)}
+                placeholder="Challenge description shown to the student..."
+                rows={2}
+                className="w-full px-2.5 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              />
+
+              {/* Optional toggle */}
+              <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={task.isOptional}
+                  onChange={(e) => update(i, 'isOptional', e.target.checked)}
+                  className="rounded"
+                />
+                Optional (exploration branch)
+              </label>
+
+              {/* Type-specific: SOCRATIC */}
+              {task.taskType === 'SOCRATIC' && (
+                <input
+                  value={task.learningObjective}
+                  onChange={(e) => update(i, 'learningObjective', e.target.value)}
+                  placeholder="Learning objective (guides AI dialogue)..."
+                  className="w-full px-2.5 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              )}
+
+              {/* Type-specific: FILE_UPLOAD */}
+              {task.taskType === 'FILE_UPLOAD' && (
+                <input
+                  value={task.starterFileUrl}
+                  onChange={(e) => update(i, 'starterFileUrl', e.target.value)}
+                  placeholder="Starter file URL (optional)..."
+                  className="w-full px-2.5 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              )}
+
+              {/* Type-specific: GUIDED_QUESTIONS */}
+              {task.taskType === 'GUIDED_QUESTIONS' && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-600">Questions</p>
+                  {task.guidedQuestions.map((q, qi) => (
+                    <div key={qi} className="flex gap-2 items-start">
+                      <div className="flex-1 space-y-1">
+                        <input
+                          value={q.question}
+                          onChange={(e) => {
+                            const next = [...task.guidedQuestions];
+                            next[qi] = { ...next[qi], question: e.target.value };
+                            update(i, 'guidedQuestions', next);
+                          }}
+                          placeholder={`Question ${qi + 1}...`}
+                          className="w-full px-2 py-1 text-xs text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <input
+                          value={q.hint}
+                          onChange={(e) => {
+                            const next = [...task.guidedQuestions];
+                            next[qi] = { ...next[qi], hint: e.target.value };
+                            update(i, 'guidedQuestions', next);
+                          }}
+                          placeholder="Hint (optional)..."
+                          className="w-full px-2 py-1 text-xs text-gray-400 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => update(i, 'guidedQuestions', task.guidedQuestions.filter((_, j) => j !== qi))}
+                        className="text-gray-300 hover:text-red-500 text-lg leading-none mt-0.5"
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => update(i, 'guidedQuestions', [...task.guidedQuestions, { question: '', hint: '' }])}
+                    className="text-xs text-indigo-600 hover:text-indigo-800"
+                  >+ Add question</button>
+                </div>
+              )}
             </div>
 
             {/* Remove */}
