@@ -28,9 +28,21 @@ export async function POST(req: Request) {
   // Load the task and its parent assignment
   const task = await prisma.task.findUnique({
     where: { id: taskId },
-    select: { id: true, assignmentId: true, pointValue: true, taskType: true },
+    select: {
+      id: true,
+      assignmentId: true,
+      pointValue: true,
+      taskType: true,
+      assignment: { select: { courseId: true } },
+    },
   });
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+
+  // Enrollment check — students may only complete tasks in courses they are enrolled in
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: task.assignment.courseId } },
+  });
+  if (!enrollment) return NextResponse.json({ error: 'Not enrolled' }, { status: 403 });
 
   // 1. Ensure a Submission row exists before referencing it
   await ensureSubmission(userId, task.assignmentId);
@@ -60,7 +72,15 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     // Handle concurrent double-submit: unique constraint violation means already completed
     if ((err as { code?: string })?.code === 'P2002') {
-      return NextResponse.json({ xp: 0, level: 0, newAchievements: [] });
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { totalPoints: true, level: true },
+      });
+      return NextResponse.json({
+        xp: profile?.totalPoints ?? 0,
+        level: profile?.level ?? 1,
+        newAchievements: [],
+      });
     }
     throw err;
   }

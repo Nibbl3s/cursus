@@ -21,7 +21,7 @@ export default async function TaskPage({ params }: Props) {
           id: true,
           title: true,
           scenarioText: true,
-          course: { select: { code: true, color: true } },
+          course: { select: { id: true, code: true, color: true } },
           tasks: { orderBy: { order: 'asc' }, select: { id: true, isOptional: true } },
         },
       },
@@ -30,7 +30,12 @@ export default async function TaskPage({ params }: Props) {
 
   if (!task || task.assignmentId !== assignmentId) notFound();
 
-  const submission = await ensureSubmission(userId, assignmentId);
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: task.assignment.course.id } },
+  });
+  if (!enrollment) notFound();
+
+  await ensureSubmission(userId, assignmentId);
 
   // Check if this task is unlocked
   const prerequisiteDone = task.unlocksAfter
@@ -69,6 +74,7 @@ export default async function TaskPage({ params }: Props) {
         isOptional: task.isOptional,
         guidedQuestions: task.guidedQuestions as { question: string; hint: string }[] | null,
         learningObjective: task.learningObjective,
+        pointValue: task.pointValue,
       }}
       assignment={{
         id: assignmentId,
@@ -77,8 +83,6 @@ export default async function TaskPage({ params }: Props) {
         courseCode: task.assignment.course.code,
         courseColor: task.assignment.course.color,
       }}
-      submissionId={submission.id}
-      userId={userId}
       alreadyCompleted={!!myCompletion}
       nextTaskId={nextTaskId}
     />

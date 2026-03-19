@@ -20,6 +20,7 @@ interface Task {
   isOptional: boolean;
   guidedQuestions: { question: string; hint: string }[] | null;
   learningObjective: string | null;
+  pointValue: number;
 }
 
 interface Assignment {
@@ -33,8 +34,6 @@ interface Assignment {
 interface Props {
   task: Task;
   assignment: Assignment;
-  submissionId: string;
-  userId: string;
   alreadyCompleted: boolean;
   nextTaskId: string | null;
 }
@@ -44,7 +43,7 @@ interface CompletionResult {
   level: number;
 }
 
-export function TaskShell({ task, assignment, submissionId, userId, alreadyCompleted, nextTaskId }: Props) {
+export function TaskShell({ task, assignment, alreadyCompleted, nextTaskId }: Props) {
   const [completionResult, setCompletionResult] = useState<CompletionResult | null>(null);
 
   async function handleComplete(completionData?: Record<string, unknown>) {
@@ -55,7 +54,7 @@ export function TaskShell({ task, assignment, submissionId, userId, alreadyCompl
     });
     if (res.ok) {
       const data = await res.json();
-      setCompletionResult({ xp: data.xp, level: data.level });
+      setCompletionResult({ xp: task.pointValue, level: data.level });
     }
   }
 
@@ -76,7 +75,7 @@ export function TaskShell({ task, assignment, submissionId, userId, alreadyCompl
       case 'QUIZ':             return <ResearchTask {...taskProps} />;
       case 'GUIDED_QUESTIONS': return <GuidedQuestionsTask {...taskProps} />;
       case 'FILE_UPLOAD':      return <FileUploadTask {...taskProps} />;
-      case 'SOCRATIC':         return <SocraticTask {...taskProps} submissionId={submissionId} userId={userId} />;
+      case 'SOCRATIC':         return <SocraticTask {...taskProps} />;
       case 'PEER_BOARD':
       case 'PEER_REVIEW':      return <PeerBoardTask {...taskProps} assignmentId={assignment.id} />;
       default:                 return <ResearchTask {...taskProps} />;

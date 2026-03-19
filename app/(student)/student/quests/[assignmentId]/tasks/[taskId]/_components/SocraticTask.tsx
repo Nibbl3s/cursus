@@ -18,8 +18,6 @@ interface Props {
   task: TaskData;
   onComplete: (data?: Record<string, unknown>) => Promise<void>;
   alreadyCompleted: boolean;
-  submissionId: string;
-  userId: string;
 }
 
 export function SocraticTask({ task, onComplete, alreadyCompleted }: Props) {

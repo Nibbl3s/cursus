@@ -26,6 +26,11 @@ export default async function AssignmentDetailPage({ params }: Props) {
   });
   if (!assignment) notFound();
 
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: assignment.courseId } },
+  });
+  if (!enrollment) notFound();
+
   const submission = await ensureSubmission(userId, assignmentId);
 
   const aiFeedback =

@@ -24,9 +24,18 @@ export async function POST(
   const { taskId } = await params;
   const task = await prisma.task.findUnique({
     where: { id: taskId },
-    select: { learningObjective: true, title: true },
+    select: { learningObjective: true, title: true, assignmentId: true },
   });
   if (!task) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Enrollment check
+  const enrollment = await prisma.enrollment.findFirst({
+    where: {
+      userId: session.user.id,
+      course: { assignments: { some: { id: task.assignmentId } } },
+    },
+  });
+  if (!enrollment) return NextResponse.json({ error: 'Not enrolled' }, { status: 403 });
 
   const body = await req.json();
   const parsed = bodySchema.safeParse(body);
