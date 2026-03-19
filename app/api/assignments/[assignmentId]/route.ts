@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 const patchSchema = z.object({
   title:          z.string().min(1).optional(),
   brief:          z.string().optional(),
+  scenarioText:   z.string().optional(),
   dueDate:        z.string().optional(),
   weight:         z.number().min(0).max(100).optional(),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']).optional(),

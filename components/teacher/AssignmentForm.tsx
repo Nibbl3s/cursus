@@ -14,6 +14,7 @@ const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
 const assignmentSchema = z.object({
   title:          z.string().min(1, 'Title is required'),
   brief:          z.string().optional(),
+  scenarioText:   z.string().optional(),
   dueDate:        z.string().min(1, 'Due date is required'),
   weight:         z.number().min(0).max(100),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']),
@@ -50,6 +51,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
 
   const [title,          setTitle]          = useState(defaultValues?.title          ?? '');
   const [brief,          setBrief]          = useState(defaultValues?.brief          ?? '');
+  const [scenarioText,   setScenarioText]   = useState(defaultValues?.scenarioText   ?? '');
   const [dueDate,        setDueDate]        = useState(defaultValues?.dueDate        ?? '');
   const [weight,         setWeight]         = useState<string>(String(defaultValues?.weight         ?? 0));
   const [difficulty,     setDifficulty]     = useState<typeof DIFFICULTIES[number]>(defaultValues?.difficulty     ?? 'MEDIUM');
@@ -71,6 +73,7 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
     const parsed = assignmentSchema.safeParse({
       title,
       brief:          brief || undefined,
+      scenarioText:   scenarioText || undefined,
       dueDate,
       weight:         parseFloat(weight),
       difficulty,
@@ -167,6 +170,21 @@ export function AssignmentForm({ courseId, assignmentId, defaultValues, defaultC
           <MDEditor value={brief} onChange={(v) => setBrief(v ?? '')} height={240} />
         </div>
         {fieldErrors.brief && <p className="mt-1 text-xs text-red-600">{fieldErrors.brief}</p>}
+      </div>
+
+      {/* Scenario text */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Scenario <span className="text-gray-400 font-normal text-xs">(student-facing mission context)</span>
+        </label>
+        <textarea
+          value={scenarioText}
+          onChange={(e) => setScenarioText(e.target.value)}
+          placeholder="You've been hired as a data analyst at a retail chain. Their sales dropped 15% this quarter. Use the data to find out why."
+          rows={4}
+          className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        />
+        <p className="text-xs text-gray-400 mt-1">Sets the real-world context shown to students in the quest lobby.</p>
       </div>
 
       {/* Due date + Weight */}

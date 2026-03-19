@@ -7,6 +7,7 @@ const createSchema = z.object({
   courseId:       z.string().min(1),
   title:          z.string().min(1),
   brief:          z.string().optional(),
+  scenarioText:   z.string().optional(),
   dueDate:        z.string().min(1),
   weight:         z.number().min(0).max(100),
   difficulty:     z.enum(['EASY', 'MEDIUM', 'HARD', 'BOSS']),
