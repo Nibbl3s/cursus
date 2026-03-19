@@ -121,6 +121,7 @@ export interface InterviewStreamOptions {
   messages: { role: string; content: string }[];
   systemPrompt: string;
   jobType?: 'ASSIGNMENT_GENERATION' | 'KNOWLEDGE_BASE_GENERATION';
+  tools?: object[];
 }
 
 /**
@@ -162,13 +163,15 @@ async function streamAnthropic(
 ) {
   const client = new Anthropic({ apiKey: options.apiKey || undefined });
 
-  const tool = options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? ANTHROPIC_KB_TOOL : ANTHROPIC_TOOL;
+  const tools: Anthropic.Tool[] = options.tools
+    ? (options.tools as Anthropic.Tool[])
+    : [options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? ANTHROPIC_KB_TOOL : ANTHROPIC_TOOL];
 
   const stream = client.messages.stream({
     model: options.model,
     max_tokens: 1000,
     system: options.systemPrompt,
-    tools: [tool],
+    tools,
     messages: options.messages as Anthropic.MessageParam[],
   });
 
@@ -206,7 +209,9 @@ async function streamOpenAICompat(
   controller: ReadableStreamDefaultController<Uint8Array>,
 ) {
   const base = (options.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '');
-  const tool = options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? OPENAI_KB_TOOL : OPENAI_TOOL;
+  const tools = options.tools
+    ? options.tools
+    : [options.jobType === 'KNOWLEDGE_BASE_GENERATION' ? OPENAI_KB_TOOL : OPENAI_TOOL];
 
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
@@ -218,7 +223,7 @@ async function streamOpenAICompat(
       model: options.model,
       max_tokens: 1000,
       stream: true,
-      tools: [tool],
+      tools,
       tool_choice: 'auto',
       messages: [
         { role: 'system', content: options.systemPrompt },
