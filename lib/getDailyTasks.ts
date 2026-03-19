@@ -107,7 +107,6 @@ export async function getDailyTasks(userId: string): Promise<DailyTask[]> {
     const count = courseTaskCount[task._courseId] ?? 0;
     if (count < 2) {
       courseTaskCount[task._courseId] = count + 1;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _courseId, ...dailyTask } = task;
       result.push(dailyTask);
     }

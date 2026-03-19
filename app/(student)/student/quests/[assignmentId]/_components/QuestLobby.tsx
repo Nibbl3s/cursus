@@ -46,7 +46,7 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 export function QuestLobby({
   assignmentId,
   scenarioText,
-  assignmentTitle,
+  assignmentTitle: _assignmentTitle,
   progressPct,
   courseColor,
   completedTasks,
