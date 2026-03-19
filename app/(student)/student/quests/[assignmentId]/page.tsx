@@ -2,12 +2,11 @@ import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth/requireRole';
 import { prisma } from '@/lib/prisma';
 import { ensureSubmission } from '@/lib/ensureSubmission';
-import { AssignmentBrief } from '@/components/student/AssignmentBrief';
-import { TaskRow } from '@/components/student/TaskRow';
-import { PostToBoardButton } from '@/components/student/board/PostToBoardButton';
 import { CourseColorDot } from '@/components/shared/CourseColorDot';
-import { SubmitWorkPanel } from './_components/SubmitWorkPanel';
+import { AssignmentBrief } from '@/components/student/AssignmentBrief';
+import { QuestLobby } from './_components/QuestLobby';
 import { FeedbackPanel } from './_components/FeedbackPanel';
+import { PostToBoardButton } from '@/components/student/board/PostToBoardButton';
 
 interface Props {
   params: Promise<{ assignmentId: string }>;
@@ -27,16 +26,13 @@ export default async function AssignmentDetailPage({ params }: Props) {
   });
   if (!assignment) notFound();
 
-  // Ensure a Submission row exists before reading or referencing it
   const submission = await ensureSubmission(userId, assignmentId);
 
-  // Fetch AI feedback if the submission has been released
   const aiFeedback =
     submission.status === 'RELEASED'
       ? await prisma.aIFeedback.findUnique({ where: { submissionId: submission.id } })
       : null;
 
-  // Fetch completed task IDs for unlock state calculation
   const completions = await prisma.taskCompletion.findMany({
     where: { userId, task: { assignmentId } },
     select: { taskId: true },
@@ -49,16 +45,17 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const urgencyColor =
     daysLeft < 3 ? 'text-red-400' : daysLeft <= 7 ? 'text-amber-400' : 'text-white/50';
 
-  const allTasksDone =
-    assignment.tasks.length > 0 && assignment.tasks.every((t) => completedTaskIds.has(t.id));
-  const isPeerReview = assignment.assessmentMode === 'PEER_REVIEW';
   const isReleased = submission.status === 'RELEASED';
-  const hasSubmitted =
-    submission.status === 'SUBMITTED' ||
-    submission.status === 'UNDER_REVIEW' ||
-    submission.status === 'AI_GRADED' ||
-    submission.status === 'TEACHER_REVIEWED' ||
-    isReleased;
+  const isPeerReview = assignment.assessmentMode === 'PEER_REVIEW';
+
+  // Required tasks only for next-task calculation
+  const requiredTasks = assignment.tasks.filter((t) => !t.isOptional);
+  const nextTask = requiredTasks.find((t) => !completedTaskIds.has(t.id)) ?? null;
+  const allDone = requiredTasks.length > 0 && requiredTasks.every((t) => completedTaskIds.has(t.id));
+
+  const completedTasksForLobby = assignment.tasks
+    .filter((t) => completedTaskIds.has(t.id))
+    .map((t) => ({ id: t.id, title: t.title, taskType: t.taskType }));
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-3xl mx-auto">
@@ -80,94 +77,43 @@ export default async function AssignmentDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Overall progress */}
-      <div className="mb-8 rounded-xl bg-white/5 border border-white/10 px-4 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-white/50 font-semibold uppercase tracking-wide">
-            Progress
-          </span>
-          <span className="text-sm font-bold text-white">
-            {Math.round(submission.progressPct)}%
-          </span>
-        </div>
-        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${submission.progressPct}%`,
-              backgroundColor:
-                submission.progressPct >= 100 ? '#10b981' : assignment.course.color,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Assignment brief */}
-      {assignment.brief ? (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wide mb-4">
-            Brief
-          </h2>
+      {/* Assignment brief (shown if no scenarioText — legacy support) */}
+      {assignment.brief && !assignment.scenarioText ? (
+        <section className="mb-6">
           <div className="rounded-xl bg-white/5 border border-white/10 p-5">
             <AssignmentBrief brief={assignment.brief} />
           </div>
         </section>
       ) : null}
 
-      {/* Task chain */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wide mb-3">
-          Tasks
-        </h2>
-        {assignment.tasks.length === 0 ? (
-          <p className="text-sm text-white/40">No tasks for this assignment.</p>
-        ) : (
-          <div className="flex flex-col gap-1">
-            {assignment.tasks.map((task) => {
-              const isUnlocked =
-                task.unlocksAfter === null || completedTaskIds.has(task.unlocksAfter);
-              return (
-                <TaskRow
-                  key={task.id}
-                  taskId={task.id}
-                  taskTitle={task.title}
-                  taskType={task.taskType}
-                  estimatedMins={task.estimatedMins}
-                  pointValue={task.pointValue}
-                  courseCode={assignment.course.code}
-                  courseColor={assignment.course.color}
-                  isUnlocked={isUnlocked}
-                />
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Work submission — always visible; locked until all tasks are done */}
-      <SubmitWorkPanel
+      {/* Quest lobby */}
+      <QuestLobby
         assignmentId={assignmentId}
-        initialContent={submission.content ?? null}
-        alreadySubmitted={hasSubmitted}
-        isLocked={!allTasksDone}
-        tasksTotal={assignment.tasks.length}
-        tasksDone={completedTaskIds.size}
+        scenarioText={assignment.scenarioText ?? null}
+        assignmentTitle={assignment.title}
+        progressPct={submission.progressPct}
+        courseColor={assignment.course.color}
+        completedTasks={completedTasksForLobby}
+        nextTask={nextTask ? { id: nextTask.id, title: nextTask.title, taskType: nextTask.taskType, isOptional: nextTask.isOptional } : null}
+        allDone={allDone}
       />
 
-      {/* Feedback panel — shown when submission is released */}
+      {/* Feedback panel */}
       {isReleased && aiFeedback && (
-        <FeedbackPanel
-          masteryLevel={submission.masteryLevel as 'BEGINNING' | 'DEVELOPING' | 'PROFICIENT' | 'ADVANCED' | null}
-          quickWins={aiFeedback.quickWins}
-          strengths={aiFeedback.strengths}
-          feedbackMarkdown={aiFeedback.feedbackMarkdown}
-          finalScore={submission.finalScore}
-        />
+        <div className="mt-6">
+          <FeedbackPanel
+            masteryLevel={submission.masteryLevel as 'BEGINNING' | 'DEVELOPING' | 'PROFICIENT' | 'ADVANCED' | null}
+            quickWins={aiFeedback.quickWins}
+            strengths={aiFeedback.strengths}
+            feedbackMarkdown={aiFeedback.feedbackMarkdown}
+            finalScore={submission.finalScore}
+          />
+        </div>
       )}
 
-      {/* Post to Board — only for PEER_REVIEW assignments that have been submitted */}
-      {isPeerReview && hasSubmitted && (
-        <div className="flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-4 py-3">
+      {/* Post to Board */}
+      {isPeerReview && (submission.status === 'SUBMITTED' || isReleased) && (
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-4 py-3">
           <div>
             <p className="text-sm font-semibold text-white">Share your work</p>
             <p className="text-xs text-white/50">Post to the peer review board for feedback</p>
