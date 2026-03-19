@@ -16,14 +16,16 @@ interface NextTask {
 }
 
 interface Props {
-  assignmentId:   string;
-  scenarioText:   string | null;
-  assignmentTitle: string;
-  progressPct:    number;
-  courseColor:    string;
-  completedTasks: CompletedTask[];
-  nextTask:       NextTask | null;
-  allDone:        boolean;
+  assignmentId:      string;
+  scenarioText:      string | null;
+  assignmentTitle:   string;
+  progressPct:       number;
+  courseColor:       string;
+  completedTasks:    CompletedTask[];
+  nextTask:          NextTask | null;
+  allDone:           boolean;
+  hasStartedRequired: boolean;
+  submissionStatus:  string;
 }
 
 const TASK_TYPE_LABELS: Record<string, string> = {
@@ -50,6 +52,8 @@ export function QuestLobby({
   completedTasks,
   nextTask,
   allDone,
+  hasStartedRequired,
+  submissionStatus,
 }: Props) {
   const circumference = 2 * Math.PI * 36; // r=36
   const offset = circumference - (progressPct / 100) * circumference;
@@ -90,10 +94,12 @@ export function QuestLobby({
               className="inline-block px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: courseColor }}
             >
-              {completedTasks.length === 0 ? 'Start Quest' : 'Continue Quest'}
+              {hasStartedRequired ? 'Continue Quest' : 'Start Quest'}
             </Link>
           ) : allDone ? (
-            <p className="text-sm text-emerald-400 font-semibold">✓ Submitted for grading</p>
+            submissionStatus === 'SUBMITTED' || submissionStatus === 'RELEASED'
+              ? <p className="text-sm text-emerald-400 font-semibold">✓ Submitted for grading</p>
+              : <p className="text-sm text-emerald-400 font-semibold">✓ All tasks complete</p>
           ) : null}
         </div>
       </section>

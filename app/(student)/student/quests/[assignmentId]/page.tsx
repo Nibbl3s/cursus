@@ -53,6 +53,8 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const nextTask = requiredTasks.find((t) => !completedTaskIds.has(t.id)) ?? null;
   const allDone = requiredTasks.length > 0 && requiredTasks.every((t) => completedTaskIds.has(t.id));
 
+  const hasStartedRequired = requiredTasks.some((t) => completedTaskIds.has(t.id));
+
   const completedTasksForLobby = assignment.tasks
     .filter((t) => completedTaskIds.has(t.id))
     .map((t) => ({ id: t.id, title: t.title, taskType: t.taskType }));
@@ -96,6 +98,8 @@ export default async function AssignmentDetailPage({ params }: Props) {
         completedTasks={completedTasksForLobby}
         nextTask={nextTask ? { id: nextTask.id, title: nextTask.title, taskType: nextTask.taskType, isOptional: nextTask.isOptional } : null}
         allDone={allDone}
+        hasStartedRequired={hasStartedRequired}
+        submissionStatus={submission.status}
       />
 
       {/* Feedback panel */}
